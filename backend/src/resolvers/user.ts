@@ -11,18 +11,19 @@ import {
 } from "type-graphql";
 import argon2 from "argon2";
 import { ThisContext } from "../types";
+import { validateRegister, validateLogin } from "../utils/validations";
 
 @ObjectType()
 class UserResponse {
-  @Field(() => [Error], { nullable: true })
-  errors?: Error[];
+  @Field(() => [FieldError], { nullable: true })
+  errors?: FieldError[];
 
   @Field(() => User, { nullable: true })
   user?: User;
 }
 
 @ObjectType()
-class Error {
+class FieldError {
   @Field()
   field: string;
 
@@ -67,7 +68,28 @@ export class UserResolver {
   }
 
   @Mutation(() => UserResponse)
-  async register(@Arg("input") input: RegisterInput): Promise<UserResponse> {
+  async register(
+    @Arg("input") input: RegisterInput,
+    @Ctx() { req }: ThisContext
+  ): Promise<UserResponse> {
+    // server side validation
+    const validationErrors: FieldError[] = Object.entries(
+      validateRegister(input)
+    ).map(([key, value]) => {
+      const fieldError: FieldError = {
+        field: key,
+        message: value,
+      };
+      return fieldError;
+    });
+
+    if (validationErrors.length) {
+      return {
+        errors: validationErrors,
+      };
+    }
+
+    // check for duplicates
     const matchedEntries: User[] = await User.find({
       where: [{ username: input.username }, { email: input.email }],
     });
@@ -81,27 +103,32 @@ export class UserResolver {
         displayName: input.displayName,
       }).save();
 
+      req.session.userId = user.id;
+
       return {
         user: user,
       };
     }
 
     // see if you can find a better way, but query db once
-    const errorArr: Error[] = [];
-    matchedEntries.forEach((user: User) => {
+
+    const errorArr: FieldError[] = matchedEntries.flatMap((user: User) => {
+      const tempErrorArr: FieldError[] = [];
       if (input.username === user.username) {
-        errorArr.push({
+        tempErrorArr.push({
           field: "username",
           message: "Username already exist!",
         });
       }
 
       if (input.email === user.email) {
-        errorArr.push({
+        tempErrorArr.push({
           field: "email",
-          message: "Email already exist!",
+          message: "Email already in use!",
         });
       }
+      console.log(tempErrorArr);
+      return tempErrorArr;
     });
 
     return {
@@ -114,17 +141,35 @@ export class UserResolver {
     @Arg("input") input: LoginInput,
     @Ctx() { req }: ThisContext
   ): Promise<UserResponse> {
+    // server side validation
+    const validationErrors: FieldError[] = Object.entries(
+      validateLogin(input)
+    ).map(([key, value]) => {
+      const fieldError: FieldError = {
+        field: key,
+        message: value,
+      };
+      return fieldError;
+    });
+
+    if (validationErrors.length) {
+      return {
+        errors: validationErrors,
+      };
+    }
+
     const dbUser = await User.findOne({
       where: input.emailOrUsername.includes("@")
         ? { email: input.emailOrUsername }
         : { username: input.emailOrUsername },
     });
+
     if (!dbUser) {
       return {
         errors: [
           {
-            field: "username",
-            message: "Username doesn't exist.",
+            field: "emailOrUsername",
+            message: "Invalid user",
           },
         ],
       };
