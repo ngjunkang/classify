@@ -12,6 +12,7 @@ import {
 import argon2 from "argon2";
 import { ThisContext } from "../types";
 import { validateRegister, validateLogin } from "../utils/validations";
+import { COOKIE_NAME } from "../constant";
 
 @ObjectType()
 class UserResponse {
@@ -201,5 +202,20 @@ export class UserResolver {
     return {
       user: dbUser,
     };
+  }
+
+  @Mutation(() => Boolean)
+  logout(@Ctx() { req, res }: ThisContext): Promise<Boolean> {
+    return new Promise((resolver) => {
+      req.session.destroy((err) => {
+        if (err) {
+          resolver(false);
+          return;
+        }
+
+        res.clearCookie(COOKIE_NAME);
+        resolver(true);
+      });
+    });
   }
 }
