@@ -3,7 +3,7 @@ import { createConnection } from "typeorm";
 
 export default {
   type: "postgres",
-  port: 5433,
+  port: 5432,
   database: "classify",
   username: "postgres",
   password: "postgres",
