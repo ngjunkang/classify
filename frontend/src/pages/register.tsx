@@ -1,12 +1,14 @@
 import { Typography } from "@material-ui/core";
 import { Form, Formik } from "formik";
+import { withUrqlClient } from "next-urql";
 import { useRouter } from "next/router";
 import React from "react";
+import Layout from "../components/Layout";
 import LoadingButton from "../components/LoadingButton";
 import PasswordInputField from "../components/PasswordTextField";
 import StandardTextField from "../components/StandardTextField";
-import Wrapper from "../components/Wrapper";
 import { useRegisterMutation } from "../generated/graphql";
+import CreateUrqlClient from "../utils/CreateUrqlClient";
 import { mapError } from "../utils/mapError";
 import { validateRegisterForm } from "../utils/validations";
 
@@ -18,7 +20,7 @@ const register: React.FC<registerProps> = ({}) => {
   const router = useRouter();
 
   return (
-    <Wrapper variant="small">
+    <Layout variant="small">
       <Typography variant="h2" color="primary">
         Register
       </Typography>
@@ -68,8 +70,8 @@ const register: React.FC<registerProps> = ({}) => {
           </Form>
         )}
       </Formik>
-    </Wrapper>
+    </Layout>
   );
 };
 
-export default register;
+export default withUrqlClient(CreateUrqlClient)(register);
