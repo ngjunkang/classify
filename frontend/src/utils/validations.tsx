@@ -1,4 +1,4 @@
-import { RegisterFieldsProps, LoginFieldsProps } from "../misc/Interface";
+import { RegisterFieldsProps, LoginFieldsProps } from "../misc/interfaces";
 
 export function validateRegisterForm(values: RegisterFieldsProps) {
   const errors: Record<string, string> = {};
@@ -49,6 +49,7 @@ export function validateRegisterForm(values: RegisterFieldsProps) {
   } else if (values.confirmPassword !== values.password) {
     errors.confirmPassword = "Passwords do not match";
   }
+
   return errors;
 }
 
@@ -90,6 +91,51 @@ export function validateLoginForm(values: LoginFieldsProps) {
     errors.password = "Password is required";
   } else if (!(values.password.length > 7 && values.password.length < 21)) {
     errors.password = "Invalid password, please check again";
+  }
+
+  return errors;
+}
+
+interface ResetPasswordFieldsProps {
+  password: string;
+  confirmPassword: string;
+}
+
+export function validateResetPasswordForm(values: ResetPasswordFieldsProps) {
+  const errors: Record<string, string> = {};
+
+  if (!values.password) {
+    errors.password = "Password is required";
+  } else if (!(values.password.length > 7 && values.password.length < 21)) {
+    errors.password = "Password length requirement: 8 to 20 characters";
+  }
+
+  // until here
+
+  if (!values.confirmPassword) {
+    errors.confirmPassword = "Password is required";
+  } else if (values.confirmPassword !== values.password) {
+    errors.confirmPassword = "Passwords do not match";
+  }
+
+  return errors;
+}
+
+interface ForgotPasswordFieldsProps {
+  email: string;
+}
+
+export function validateForgotPasswordForm(values: ForgotPasswordFieldsProps) {
+  const errors: Record<string, string> = {};
+
+  const regex =
+    /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  if (!values.email) {
+    errors.email = "Email required";
+  } else if (!regex.test(values.email)) {
+    errors.email = "Email address is invalid";
+  } else if (values.email.trim().length > 320) {
+    errors.emailOrUsername = "Email address is invalid";
   }
 
   return errors;
