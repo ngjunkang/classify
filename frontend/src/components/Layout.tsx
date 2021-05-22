@@ -1,5 +1,5 @@
 import React from "react";
-import { Wrapper, WrapperVariant } from "./Wrapper";
+import Wrapper, { WrapperVariant } from "./Wrapper";
 import NavBar from "./NavBar";
 
 interface LayoutProps {
