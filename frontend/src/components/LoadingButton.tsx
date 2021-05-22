@@ -4,6 +4,7 @@ import React from "react";
 interface LoadingButtonProps {
   isLoading: boolean;
   type: "submit" | "reset" | "button";
+  disabled?: boolean;
 }
 
 const LoadingButton: React.FC<LoadingButtonProps> = ({
@@ -13,7 +14,7 @@ const LoadingButton: React.FC<LoadingButtonProps> = ({
 }) => {
   return (
     <Box mt={2} textAlign="center">
-      <Button {...props} color="primary">
+      <Button {...props} disabled={props.disabled || isLoading} color="primary">
         {isLoading ? (
           <CircularProgress color="secondary" size="20px" />
         ) : (
