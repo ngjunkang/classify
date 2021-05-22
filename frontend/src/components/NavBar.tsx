@@ -21,6 +21,8 @@ import NotificationsIcon from "@material-ui/icons/Notifications";
 import MoreIcon from "@material-ui/icons/MoreVert";
 import Button from "@material-ui/core/Button";
 import { useMeQuery, useLogoutMutation } from "../generated/graphql";
+import isServer from "../utils/isServer";
+import NextLink from "next/link";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -32,6 +34,7 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     title: {
       display: "none",
+      cursor: "pointer",
       [theme.breakpoints.up("sm")]: {
         display: "block",
       },
@@ -91,9 +94,14 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
-function NavBar() {
+interface NavBarProps {}
+
+const NavBar: React.FC<NavBarProps> = () => {
   const classes = useStyles();
-  const [{ data, fetching }] = useMeQuery();
+  const [{ data, fetching }] = useMeQuery({
+    pause: isServer(),
+  });
+
   const [, logout] = useLogoutMutation();
 
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -252,9 +260,11 @@ function NavBar() {
           >
             <MenuIcon />
           </IconButton>
-          <Typography className={classes.title} variant="h6" noWrap>
-            {data?.me ? data.me.username : "Classify"}
-          </Typography>
+          <NextLink href="/">
+            <Typography className={classes.title} variant="h6" noWrap>
+              Classify
+            </Typography>
+          </NextLink>
           <div className={classes.search}>
             <div className={classes.searchIcon}>
               <SearchIcon />
@@ -276,6 +286,6 @@ function NavBar() {
       {renderMenu}
     </div>
   );
-}
+};
 
 export default NavBar;
