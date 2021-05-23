@@ -1,23 +1,24 @@
 import "reflect-metadata";
-import { Connection, createConnection } from "typeorm";
+import { createConnection } from "typeorm";
 import typeOrmConfig from "./typeormconfig";
 import express from "express";
 import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
 import { HelloResolver } from "./resolvers/hello";
 import { UserResolver } from "./resolvers/user";
-import redis from "redis";
+import Redis from "ioredis";
 import session from "express-session";
 import connectRedis from "connect-redis";
 import { COOKIE_NAME, PRODUCTION } from "./constant";
 import cors from "cors";
+import { PostResolver } from "./resolvers/post";
 
 const main = async () => {
-  const conn: Connection = await createConnection(typeOrmConfig);
+  await createConnection(typeOrmConfig);
   const app = express();
 
   const RedisStore = connectRedis(session);
-  const redisClient = redis.createClient();
+  const redis = new Redis();
 
   app.use(
     cors({
@@ -29,7 +30,7 @@ const main = async () => {
   app.use(
     session({
       name: COOKIE_NAME,
-      store: new RedisStore({ client: redisClient, disableTouch: true }), // touch refreshes the session
+      store: new RedisStore({ client: redis, disableTouch: true }), // touch refreshes the session
       cookie: {
         maxAge: 86400 * 365, // one year
         httpOnly: true,
@@ -42,14 +43,12 @@ const main = async () => {
     })
   );
 
-  console.log(conn.name);
-
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
-      resolvers: [HelloResolver, UserResolver],
+      resolvers: [HelloResolver, UserResolver, PostResolver],
       validate: false,
     }),
-    context: ({ req, res }) => ({ req, res }),
+    context: ({ req, res }) => ({ req, res, redis }),
   });
 
   apolloServer.applyMiddleware({ app, cors: false });
