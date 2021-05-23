@@ -65,3 +65,34 @@ For first-time installation/beginners, follow these steps after the installation
 ### To run the converted Javascript files in dist and watch for changes
 
     # yarn dev
+
+## Deployment
+
+### Environment file (for ease of switching between development and production)
+
+Copy the template from .env.example to a new file .env. The format of the variables is as follows:
+
+1. DATABASE_URL=databaseType://username:password@host:port/databaseName
+   E.g. DATABASE_URL=postgresql://postgres:postgres@localhost:5432/classify
+2. REDIS_URL=host:port
+   E.g. REDIS_URL=localhost:6379 (Set this as default)
+3. PORT=port
+   E.g. PORT=4000
+4. SESSION_SECRET=randomString
+   E.g. SESSION_SECRET=hkjasdnmfdeeadsldxfdhderaqwqaq
+5. CORS_ORIGIN=clientAddress
+   E.g. CORS_ORIGIN=http://localhost:3000
+6. EMAIL=gmailToSendEmailFrom
+7. EMAIL_PASSWORD=gmailPassword
+
+Extra environment variables for production only:
+
+1. CDOMAIN=domainName
+   E.g. CDOMAIN=.classify.page
+2. NODE_ENV=production
+
+#### Run this when you add new environment variables:
+
+    npx gen-env-types .env -o src/env.d.ts -e .
+    OR
+    yarn gen-env
