@@ -15,6 +15,7 @@ import { validateRegister, validateLogin } from "../utils/validations";
 import { COOKIE_NAME, RESET_PASSWORD_PREFIX } from "../constant";
 import sendEmail from "../utils/sendEmail";
 import { v4 } from "uuid";
+import "dotenv-safe/config";
 
 @ObjectType()
 class UserResponse {

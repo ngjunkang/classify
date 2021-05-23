@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import "dotenv-safe/config";
 
 interface sendEmailProps {
   subject: string;
