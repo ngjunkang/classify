@@ -12,17 +12,20 @@ import connectRedis from "connect-redis";
 import { COOKIE_NAME, PRODUCTION } from "./constant";
 import cors from "cors";
 import { PostResolver } from "./resolvers/post";
+import "dotenv-safe/config";
 
 const main = async () => {
   await createConnection(typeOrmConfig);
   const app = express();
 
   const RedisStore = connectRedis(session);
-  const redis = new Redis();
+  const redis = new Redis(process.env.REDIS_URL);
+
+  app.set("trust proxy", 1);
 
   app.use(
     cors({
-      origin: "http://localhost:3000",
+      origin: process.env.CORS_ORIGIN,
       credentials: true,
     })
   );
@@ -36,8 +39,9 @@ const main = async () => {
         httpOnly: true,
         sameSite: "lax",
         secure: PRODUCTION, // only works in https
+        domain: PRODUCTION ? process.env.CDOMAIN : undefined,
       },
-      secret: "jkykpythong", // to be changed
+      secret: process.env.SESSION_SECRET,
       saveUninitialized: false, // save even when no variable assigned
       resave: false,
     })
@@ -53,8 +57,8 @@ const main = async () => {
 
   apolloServer.applyMiddleware({ app, cors: false });
 
-  app.listen(4000, () => {
-    console.log("server started on http://localhost:4000");
+  app.listen(parseInt(process.env.PORT), () => {
+    console.log("server started on http://localhost:" + process.env.PORT);
   });
 };
 
