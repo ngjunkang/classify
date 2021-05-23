@@ -12,7 +12,9 @@ import {
 import argon2 from "argon2";
 import { ThisContext } from "../types";
 import { validateRegister, validateLogin } from "../utils/validations";
-import { COOKIE_NAME } from "../constant";
+import { COOKIE_NAME, RESET_PASSWORD_PREFIX } from "../constant";
+import sendEmail from "../utils/sendEmail";
+import { v4 } from "uuid";
 
 @ObjectType()
 class UserResponse {
@@ -56,16 +58,112 @@ class LoginInput {
   password!: string;
 }
 
+@InputType()
+class ResetPasswordInput {
+  @Field()
+  token!: string;
+
+  @Field()
+  password!: string;
+}
+
 @Resolver()
 export class UserResolver {
+  @Mutation(() => UserResponse)
+  async resetPassword(
+    @Arg("data") data: ResetPasswordInput,
+    @Ctx() { redis, req }: ThisContext
+  ): Promise<UserResponse> {
+    // simple password validation
+    if (!data.password) {
+      return {
+        errors: [
+          {
+            field: "password",
+            message: "Password is required",
+          },
+        ],
+      };
+    } else if (!(data.password.length > 7 && data.password.length < 21)) {
+      return {
+        errors: [
+          {
+            field: "password",
+            message: "Password length requirement: 8 to 20 characters",
+          },
+        ],
+      };
+    }
+
+    // token validation
+    const key = RESET_PASSWORD_PREFIX + data.token;
+    const userId = await redis.get(key);
+
+    if (!userId) {
+      return {
+        errors: [
+          {
+            field: "token",
+            message: "Token expired",
+          },
+        ],
+      };
+    }
+
+    const userIdInt = parseInt(userId);
+    const user = await User.findOne(userIdInt);
+
+    if (!user) {
+      return {
+        errors: [
+          {
+            field: "token",
+            message: "Invalid token",
+          },
+        ],
+      };
+    }
+
+    const newPassword = await argon2.hash(data.password);
+    await User.update({ id: userIdInt }, { password: newPassword });
+    await redis.del(key);
+
+    req.session.userId = user.id;
+
+    return {
+      user: user,
+    };
+  }
+
+  @Mutation(() => Boolean)
+  async forgotPassword(
+    @Arg("email") email: string,
+    @Ctx() { redis }: ThisContext
+  ) {
+    const user = await User.findOne({
+      where: { email: email },
+    });
+    if (user) {
+      const token = v4();
+      redis.set(RESET_PASSWORD_PREFIX + token, user.id, "ex", 7200000); // two hour to reset
+
+      await sendEmail({
+        to: email,
+        subject: "Change Password",
+        body: `<a href="http://localhost:3000/reset-password/${token}">Reset Password</a>`,
+      });
+    }
+
+    return true;
+  }
+
   @Query(() => User, { nullable: true })
   async me(@Ctx() { req }: ThisContext) {
     if (!req.session.userId) {
       return null;
     }
 
-    const user = await User.findOne(req.session.userId);
-    return user;
+    return User.findOne(req.session.userId);
   }
 
   @Mutation(() => UserResponse)
