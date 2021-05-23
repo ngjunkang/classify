@@ -13,6 +13,7 @@ import { COOKIE_NAME, PRODUCTION } from "./constant";
 import cors from "cors";
 import { PostResolver } from "./resolvers/post";
 import "dotenv-safe/config";
+import helmet from "helmet";
 
 const main = async () => {
   await createConnection(typeOrmConfig);
@@ -22,6 +23,8 @@ const main = async () => {
   const redis = new Redis(process.env.REDIS_URL);
 
   app.set("trust proxy", 1);
+
+  PRODUCTION ? app.use(helmet()) : null;
 
   app.use(
     cors({
