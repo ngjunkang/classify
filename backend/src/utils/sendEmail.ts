@@ -8,18 +8,14 @@ interface sendEmailProps {
 
 // async..await is not allowed in global scope, must use a wrapper
 async function sendEmail(email: sendEmailProps) {
-  // Generate test SMTP service account from ethereal.email
-  // Only needed if you don't have a real mail account for testing
-  // let testAccount = await nodemailer.createTestAccount();
-
   // create reusable transporter object using the default SMTP transport
   let transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 587,
     secure: false, // true for 465, false for other ports
     auth: {
-      user: "classify.page@gmail.com", // generated ethereal user
-      pass: "postgres", // generated ethereal password
+      user: process.env.EMAIL, // generated ethereal user
+      pass: process.env.EMAIL_PASSWORD, // generated ethereal password
     },
   });
 
