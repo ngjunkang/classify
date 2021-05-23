@@ -1,13 +1,11 @@
 import { User } from "./entities/User";
 import { createConnection } from "typeorm";
 import { Post } from "./entities/Post";
+import "dotenv-safe/config";
 
 export default {
   type: "postgres",
-  port: 5432,
-  database: "classify",
-  username: "postgres",
-  password: "postgres",
+  url: process.env.DATABASE_URL,
   logging: true,
   synchronize: true,
   entities: [User, Post],
