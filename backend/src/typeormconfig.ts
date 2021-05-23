@@ -1,5 +1,6 @@
 import { User } from "./entities/User";
 import { createConnection } from "typeorm";
+import { Post } from "./entities/Post";
 
 export default {
   type: "postgres",
@@ -9,5 +10,5 @@ export default {
   password: "postgres",
   logging: true,
   synchronize: true,
-  entities: [User],
+  entities: [User, Post],
 } as Parameters<typeof createConnection>[0];
