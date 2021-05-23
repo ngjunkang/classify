@@ -21,7 +21,7 @@ function updateCacheQuery<Result, Query>(
 }
 
 const CreateUrqlClient = (ssrExchange: any) => ({
-  url: "http://localhost:4000/graphql",
+  url: process.env.NEXT_PUBLIC_API_URL,
   fetchOptions: {
     credentials: "include" as const,
   },
