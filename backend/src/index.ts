@@ -24,7 +24,9 @@ const main = async () => {
 
   app.set("trust proxy", 1);
 
-  PRODUCTION ? app.use(helmet()) : null;
+  if (PRODUCTION) {
+    app.use(helmet());
+  }
 
   app.use(
     cors({
@@ -47,6 +49,7 @@ const main = async () => {
       secret: process.env.SESSION_SECRET,
       saveUninitialized: false, // save even when no variable assigned
       resave: false,
+      proxy: PRODUCTION,
     })
   );
 
