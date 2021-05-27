@@ -1,12 +1,21 @@
 # Developer's Guide
 
-## Table of Contents
-
-- **[Environment Setup](#env-setup)**
-  - [PostgreSQL Setup](#postgres-setup)
+- [Environment setup](#environment-setup)
+  - [PostgreSQL Setup](#postgresql-setup)
   - [NodeJS Setup](#nodejs-setup)
-
-<a name="env-setup"></a>
+  - [Clone Repository to Local](#clone-repository-to-local)
+  - [Go to respective folder to download required node modules](#go-to-respective-folder-to-download-required-node-modules)
+- [Backend Yarn commands as configured in package.json under scripts](#backend-yarn-commands-as-configured-in-packagejson-under-scripts)
+  - [To convert TypeScript files in src to JavaScript files in dist and watch for changes in the TypeScript files](#to-convert-typescript-files-in-src-to-javascript-files-in-dist-and-watch-for-changes-in-the-typescript-files)
+  - [To run the converted Javascript files in dist and watch for changes](#to-run-the-converted-javascript-files-in-dist-and-watch-for-changes)
+- [Frontend Deployment](#frontend-deployment)
+  - [Environment file (for ease of switching between development and production)](#environment-file--for-ease-of-switching-between-development-and-production-)
+  - [Vercel Deployment](#vercel-deployment)
+- [Backend Deployment](#backend-deployment)
+  - [Backend Environment file (for ease of switching between development and production)](#backend-environment-file--for-ease-of-switching-between-development-and-production-)
+  - [Backend Server Deployment](#backend-server-deployment)
+    - [Installation](#installation)
+    - [Environment Setup](#environment-setup)
 
 ## Environment setup
 
@@ -23,37 +32,37 @@ Ensure you have these installed:
 
 For first-time installation/beginners, follow these steps after the installation (non-first-timers should know what to do). Note this is only for development environment.
 
-#### a. Change CLI user to postgres (Make sure you start the PostgreSQL service before this - Google it)
+1.  Change CLI user to postgres (Make sure you start the PostgreSQL service before this - Google it)
 
-    sudo su postgres
+        sudo su postgres
 
-#### b. Login into postgres via peer authentication through postgres user
+2.  Login into postgres via peer authentication through postgres user
 
-    psql
+        psql
 
-#### c. Change password to 'postgres'
+3.  Change password to 'postgres'
 
-     \password
+        \password
 
-#### d. Exit psql
+4.  Exit psql
 
-    \q
+        \q
 
-#### e. Create a database using postgres user, named 'classify'
+5.  Create a database using postgres user, named 'classify'
 
-    createdb classify
+        createdb classify
 
-#### f. Exit postgres user
+6.  Exit postgres user
 
-    exit
+        exit
 
-#### g. Then restart PostgreSQL service
+7.  Then restart PostgreSQL service
 
 <a name="nodejs-setup"></a>
 
 ### NodeJS Setup
 
-#### a. Install yarn globally for easy usage
+Install yarn globally for easy usage
 
     npm install -g yarn
 
@@ -133,7 +142,7 @@ Extra environment variables for production only:
    E.g. CDOMAIN=.classify.page
 2. NODE_ENV=production
 
-#### Run this when you add new environment variables:
+Note: Run this when you add new environment variables:
 
     npx gen-env-types .env -o src/env.d.ts -e .
     OR
