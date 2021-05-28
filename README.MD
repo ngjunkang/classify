@@ -4,15 +4,15 @@
   - [PostgreSQL Setup](#postgresql-setup)
   - [NodeJS Setup](#nodejs-setup)
   - [Clone Repository to Local](#clone-repository-to-local)
-  - [Go to respective folder to download required node modules](#go-to-respective-folder-to-download-required-node-modules)
-- [Backend Yarn commands as configured in package.json under scripts](#backend-yarn-commands-as-configured-in-packagejson-under-scripts)
-  - [To convert TypeScript files in src to JavaScript files in dist and watch for changes in the TypeScript files](#to-convert-typescript-files-in-src-to-javascript-files-in-dist-and-watch-for-changes-in-the-typescript-files)
-  - [To run the converted Javascript files in dist and watch for changes](#to-run-the-converted-javascript-files-in-dist-and-watch-for-changes)
+  - [Node Module Installation](#node-module-installation)
+- [Yarn commands](#yarn-commands)
+  - [Frontend](#frontend)
+  - [Backend](#backend)
 - [Frontend Deployment](#frontend-deployment)
-  - [Environment file (for ease of switching between development and production)](#environment-file--for-ease-of-switching-between-development-and-production-)
+  - [Frontend Environment file](#frontend-environment-file)
   - [Vercel Deployment](#vercel-deployment)
 - [Backend Deployment](#backend-deployment)
-  - [Backend Environment file (for ease of switching between development and production)](#backend-environment-file--for-ease-of-switching-between-development-and-production-)
+  - [Backend Environment file](#backend-environment-file)
   - [Backend Server Deployment](#backend-server-deployment)
     - [Installation](#installation)
     - [Environment Setup](#environment-setup)
@@ -25,8 +25,6 @@ Ensure you have these installed:
 2. NodeJS (https://nodejs.org/en/download/)
 3. Redis (Google how to install this, may differ across platforms)
 4. Visual Studio Code (Optional)
-
-<a name="postgres-setup"></a>
 
 ### PostgreSQL Setup
 
@@ -58,8 +56,6 @@ For first-time installation/beginners, follow these steps after the installation
 
 7.  Then restart PostgreSQL service
 
-<a name="nodejs-setup"></a>
-
 ### NodeJS Setup
 
 Install yarn globally for easy usage
@@ -70,26 +66,59 @@ Install yarn globally for easy usage
 
     git clone https://github.com/ngjunkang/classify.git
 
-### Go to respective folder to download required node modules
+### Node Module Installation
 
-    cd classify/frontend
-    cd classify/backend
+```
+# Go to respective folder
+cd classify/frontend
+cd classify/backend
 
-    yarn
+# To download required node modules
+yarn
+```
 
-## Backend Yarn commands as configured in package.json under scripts
+## Yarn commands
 
-### To convert TypeScript files in src to JavaScript files in dist and watch for changes in the TypeScript files
+NodeJs allows us to configure alias to run commands, under scripts in package.json, and we can run it with 'yarn SCRIPT_NAME'.
 
-    yarn watch
+### Frontend
 
-### To run the converted Javascript files in dist and watch for changes
+```
+# To compile and run the NextJS application, and watch for changes (run this during development)
+yarn dev
 
-    yarn dev
+# To compile the NextJS application into JavaScript files in .next directory
+yarn build
+
+# To run the JavaScript files in .next directory
+yarn start
+
+# To generate the types for each variables in the GraphQL schemas
+yarn gen
+```
+
+### Backend
+
+```
+# To compile TypeScript files in src into JavaScript files in dist and watch for changes in the TypeScript files (run this during development)
+yarn watch
+
+# To run the compiled Javascript files in dist and watch for changes (run this during development)
+yarn dev
+
+# To compile TypeScript files in src into JavaScript files in dist
+yarn build
+
+# To run the compiled Javascript files in dist
+yarn start
+
+# To generate the types of the environment variables configured in .env into src/env.d.ts as well as the .env.example file for environment variables checking
+yarn gen-env
+```
 
 ## Frontend Deployment
 
-### Environment file (for ease of switching between development and production)
+### Frontend Environment file
 
 Create a file called .env.local in the frontend directory and it should contain:
 
@@ -109,7 +138,9 @@ Create a file called .env.local in the frontend directory and it should contain:
 
 ## Backend Deployment
 
-### Backend Environment file (for ease of switching between development and production)
+### Backend Environment file
+
+This setup is for ease of switching between development and production.
 
 Copy the template from .env.example to a new file .env in the backend directory. The format of the variables is as follows:
 
@@ -222,7 +253,7 @@ This basic guide is only applicable for Linux server, specifically Ubuntu/Debian
 
 #### Environment Setup
 
-1.  Set up [PostgreSQL](#postgres-setup) and [NodeJS](#nodejs-setup) (use sudo) as above.
+1.  Set up [PostgreSQL](#postgresql-setup) and [NodeJS](#nodejs-setup) (use sudo) as above.
 
 2.  Set up UFW
 
