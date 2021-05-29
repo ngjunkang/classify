@@ -16,6 +16,7 @@ import { COOKIE_NAME, RESET_PASSWORD_PREFIX } from "../constant";
 import sendEmail from "../utils/sendEmail";
 import { v4 } from "uuid";
 import "dotenv-safe/config";
+import resetPasswordEmail from "../utils/resetPasswordEmail";
 
 @ObjectType()
 class UserResponse {
@@ -148,11 +149,16 @@ export class UserResolver {
       const token = v4();
       redis.set(RESET_PASSWORD_PREFIX + token, user.id, "ex", 7200000); // two hour to reset
 
+      console.log("oka");
+
+      console.log(
+        resetPasswordEmail({ username: user.displayName, token: token })
+      );
       await sendEmail({
         to: email,
         subject: "Change Password",
-        body: `<a href="${process.env.CORS_ORIGIN}/reset-password/${token}">Reset Password</a>`,
-      });
+        body: resetPasswordEmail({ username: user.displayName, token: token }),
+      }).catch(console.error);
     }
 
     return true;
