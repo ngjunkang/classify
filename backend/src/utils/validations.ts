@@ -11,7 +11,7 @@ export function validateRegister(values: RegisterProps) {
   // replace here
   if (!values.username.trim()) {
     errors.username = "Username required";
-  } else if (!/^[A-Za-z][A-Za-z0-9]+$/.test(values.username.trim())) {
+  } else if (!/^[A-Za-z0-9]+$/.test(values.username.trim())) {
     errors.username = "Only alphanumeric characters are allowed";
   } else if (
     !(values.username.trim().length > 5 && values.username.trim().length < 21)
@@ -74,7 +74,7 @@ export function validateLogin(values: LoginProps) {
       }
     } else {
       // username
-      if (!/^[A-Za-z][A-Za-z0-9]+$/.test(values.emailOrUsername.trim())) {
+      if (!/^[A-Za-z0-9]+$/.test(values.emailOrUsername.trim())) {
         errors.emailOrUsername = "Only alphanumeric characters are allowed";
       } else if (
         !(
