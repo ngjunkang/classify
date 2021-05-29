@@ -8,7 +8,7 @@ interface sendEmailProps {
 }
 
 // async..await is not allowed in global scope, must use a wrapper
-async function sendEmail(email: sendEmailProps) {
+async function sendEmail({ subject, to, body }: sendEmailProps) {
   // create reusable transporter object using the default SMTP transport
   let transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
@@ -23,9 +23,9 @@ async function sendEmail(email: sendEmailProps) {
   // send mail with defined transport object
   await transporter.sendMail({
     from: '"Classify" <classify.page@gmail.com>', // sender address
-    to: email.to, // list of receivers
-    subject: email.subject, // Subject line
-    html: email.body, // plain text body
+    to: to, // list of receivers
+    subject: subject, // Subject line
+    html: body, // plain text body
   });
 }
 
