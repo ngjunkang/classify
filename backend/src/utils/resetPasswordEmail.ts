@@ -20,7 +20,6 @@ function resetPasswordEmail({
           <h1>Hello ${username},</h1>
           <a href="${process.env.CORS_ORIGIN}/reset-password/${token}">Click here to reset password</a>
       </div>
-      
     </body>
   </html>
   `;
