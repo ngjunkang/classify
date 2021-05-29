@@ -156,7 +156,7 @@ export class UserResolver {
       );
       await sendEmail({
         to: email,
-        subject: "Change Password",
+        subject: "Reset Password",
         body: resetPasswordEmail({ username: user.displayName, token: token }),
       }).catch(console.error);
     }
