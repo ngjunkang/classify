@@ -149,16 +149,11 @@ export class UserResolver {
       const token = v4();
       redis.set(RESET_PASSWORD_PREFIX + token, user.id, "ex", 7200000); // two hour to reset
 
-      console.log("oka");
-
-      console.log(
-        resetPasswordEmail({ username: user.displayName, token: token })
-      );
-      await sendEmail({
+      sendEmail({
         to: email,
         subject: "Reset Password",
         body: resetPasswordEmail({ username: user.displayName, token: token }),
-      }).catch(console.error);
+      });
     }
 
     return true;
