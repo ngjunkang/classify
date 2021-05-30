@@ -17,6 +17,7 @@ import sendEmail from "../utils/sendEmail";
 import { v4 } from "uuid";
 import "dotenv-safe/config";
 import resetPasswordEmail from "../utils/resetPasswordEmail";
+import { getConnection } from "typeorm";
 
 @ObjectType()
 class UserResponse {
@@ -141,10 +142,20 @@ export class UserResolver {
   async forgotPassword(
     @Arg("email") email: string,
     @Ctx() { redis }: ThisContext
-  ) {
-    const user = await User.findOne({
-      where: { email: email },
-    });
+  ): Promise<Boolean> {
+    const regex =
+      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    if (!email || email.trim().length > 320 || !regex.test(email)) {
+      return true;
+    }
+
+    const user = await getConnection()
+      .createQueryBuilder()
+      .select("user")
+      .from(User, "user")
+      .where("LOWER(user.email) = :email", { email: email.toLowerCase() })
+      .getOne();
+
     if (user) {
       const token = v4();
       redis.set(RESET_PASSWORD_PREFIX + token, user.id, "ex", 7200000); // two hour to reset
@@ -190,10 +201,17 @@ export class UserResolver {
       };
     }
 
+    const inputEmailLC: string = input.email.toLowerCase();
+    const inputUsernameLC: string = input.username.toLowerCase();
+
     // check for duplicates
-    const matchedEntries: User[] = await User.find({
-      where: [{ username: input.username }, { email: input.email }],
-    });
+    const matchedEntries: User[] = await getConnection()
+      .createQueryBuilder()
+      .select("user")
+      .from(User, "user")
+      .where("LOWER(user.email) = :email", { email: inputEmailLC })
+      .orWhere("user.username = :username", { username: input.username })
+      .getMany();
 
     if (!matchedEntries.length) {
       const hashedPassword: string = await argon2.hash(input.password);
@@ -215,20 +233,20 @@ export class UserResolver {
 
     const errorArr: FieldError[] = matchedEntries.flatMap((user: User) => {
       const tempErrorArr: FieldError[] = [];
-      if (input.username === user.username) {
+      if (inputUsernameLC === user.username.toLowerCase()) {
         tempErrorArr.push({
           field: "username",
           message: "Username already exist!",
         });
       }
 
-      if (input.email === user.email) {
+      if (inputEmailLC === user.email.toLowerCase()) {
         tempErrorArr.push({
           field: "email",
           message: "Email already in use!",
         });
       }
-      console.log(tempErrorArr);
+
       return tempErrorArr;
     });
 
@@ -259,11 +277,19 @@ export class UserResolver {
       };
     }
 
-    const dbUser = await User.findOne({
-      where: input.emailOrUsername.includes("@")
-        ? { email: input.emailOrUsername }
-        : { username: input.emailOrUsername },
-    });
+    const dbUser = await getConnection()
+      .createQueryBuilder()
+      .select("user")
+      .from(User, "user")
+      .where(
+        input.emailOrUsername.includes("@")
+          ? "LOWER(user.email) = LOWER(:emailOrUsername)"
+          : "user.username = :emailOrUsername",
+        {
+          emailOrUsername: input.emailOrUsername,
+        }
+      )
+      .getOne();
 
     if (!dbUser) {
       return {
