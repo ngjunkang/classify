@@ -292,7 +292,7 @@ This basic guide is only applicable for Linux server, specifically Ubuntu/Debian
     git clone https://github.com/ngjunkang/classify.git
     ```
 
-5.  Create the environment file, .env as stated above
+5.  Create the environment file, [.env](#backend-environment-file) as stated above
 
 6.  Go to backend and install the required node modules
 
