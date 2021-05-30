@@ -1,3 +1,5 @@
+import "dotenv-safe/config";
+
 interface ResetPasswordEmailProps {
   username: string;
   token: string;
