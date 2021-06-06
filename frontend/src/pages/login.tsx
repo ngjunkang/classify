@@ -1,14 +1,15 @@
-import { Box, Typography } from "@material-ui/core";
+import { Box, Link, Typography } from "@material-ui/core";
 import { Form, Formik } from "formik";
 import { withUrqlClient } from "next-urql";
+import NextLink from "next/link";
 import { useRouter } from "next/router";
 import React from "react";
 import Layout from "../components/Layout";
 import LoadingButton from "../components/LoadingButton";
-import NextLink from "../components/NextLink";
 import PasswordInputField from "../components/PasswordTextField";
 import StandardTextField from "../components/StandardTextField";
 import { useLoginMutation } from "../generated/graphql";
+import useGlobalStyles from "../styles/GlobalStyles";
 import CreateUrqlClient from "../utils/CreateUrqlClient";
 import { mapError } from "../utils/mapError";
 import { validateLoginForm } from "../utils/validations";
@@ -16,6 +17,8 @@ import { validateLoginForm } from "../utils/validations";
 interface loginProps {}
 
 const login: React.FC<loginProps> = ({}) => {
+  const globalStyles = useGlobalStyles();
+
   const [, login] = useLoginMutation();
   const router = useRouter();
 
@@ -35,7 +38,11 @@ const login: React.FC<loginProps> = ({}) => {
           if (res.data?.login.errors) {
             setErrors(mapError(res.data.login.errors));
           } else if (res.data?.login.user) {
-            router.push("/");
+            if (typeof router.query.next === "string") {
+              router.push(router.query.next);
+            } else {
+              router.push("/");
+            }
           }
         }}
         validate={(values) => validateLoginForm(values)}
@@ -53,10 +60,18 @@ const login: React.FC<loginProps> = ({}) => {
             />
             <Box mt={1} style={{ display: "flex" }}>
               <Box style={{ flexGrow: 1 }}>
-                <NextLink href="/register">Or sign up here</NextLink>
+                <NextLink href="/register">
+                  <Link className={globalStyles.pointerOnLink}>
+                    Or sign up here
+                  </Link>
+                </NextLink>
               </Box>
               <Box>
-                <NextLink href="/forgot-password">Forgot password?</NextLink>
+                <NextLink href="/forgot-password">
+                  <Link className={globalStyles.pointerOnLink}>
+                    Forgot password?
+                  </Link>
+                </NextLink>
               </Box>
             </Box>
 
