@@ -2,21 +2,18 @@ import { Box, Link, Theme, Typography } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { Form, Formik } from "formik";
 import { NextPage } from "next";
-import { withUrqlClient, WithUrqlProps } from "next-urql";
+import { withUrqlClient } from "next-urql";
+import NextLink from "next/link";
 import router from "next/router";
-import React, { FunctionComponent, PropsWithChildren, useState } from "react";
+import React, { useState } from "react";
 import Layout from "../../components/Layout";
 import LoadingButton from "../../components/LoadingButton";
-import NextLink from "../../components/NextLink";
 import PasswordInputField from "../../components/PasswordTextField";
 import { useResetPasswordMutation } from "../../generated/graphql";
+import useGlobalStyles from "../../styles/GlobalStyles";
 import CreateUrqlClient from "../../utils/CreateUrqlClient";
 import { mapError } from "../../utils/mapError";
 import { validateResetPasswordForm } from "../../utils/validations";
-
-interface ResetPasswordProps {
-  token: string;
-}
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -30,8 +27,10 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
-const ResetPassword: NextPage<ResetPasswordProps> = (props) => {
+const ResetPassword: NextPage = () => {
   const styles = useStyles();
+  const globalStyles = useGlobalStyles();
+
   const [, resetPassword] = useResetPasswordMutation();
   const [tokenError, setTokenError] = useState("");
 
@@ -48,7 +47,8 @@ const ResetPassword: NextPage<ResetPasswordProps> = (props) => {
         onSubmit={async (data, { setErrors }) => {
           const res = await resetPassword({
             password: data.password,
-            token: props.token,
+            token:
+              typeof router.query.token === "string" ? router.query.token : "",
           });
 
           if (res.data?.resetPassword.errors) {
@@ -84,7 +84,9 @@ const ResetPassword: NextPage<ResetPasswordProps> = (props) => {
                 <Box color="red">{tokenError}</Box>
                 <Box className={styles.separator}>
                   <NextLink href="/forgot-password">
-                    Click here to get a new one
+                    <Link className={globalStyles.pointerOnLink}>
+                      Click here to get a new one
+                    </Link>
                   </NextLink>
                 </Box>
               </Box>
@@ -104,14 +106,4 @@ const ResetPassword: NextPage<ResetPasswordProps> = (props) => {
   );
 };
 
-ResetPassword.getInitialProps = ({ query }) => {
-  return {
-    token: query.token as string,
-  };
-};
-
-export default withUrqlClient(CreateUrqlClient)(
-  ResetPassword as FunctionComponent<
-    PropsWithChildren<WithUrqlProps | { token: string }>
-  >
-);
+export default withUrqlClient(CreateUrqlClient, { ssr: false })(ResetPassword);
