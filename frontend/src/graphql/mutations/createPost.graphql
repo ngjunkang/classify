@@ -1,0 +1,11 @@
+mutation CreatePost($details: CreatePostDetails!) {
+  createPost(details: $details) {
+    id
+    createdAt
+    updatedAt
+    title
+    content
+    points
+    creatorId
+  }
+}
