@@ -10,6 +10,7 @@ import PasswordInputField from "../components/PasswordTextField";
 import StandardTextField from "../components/StandardTextField";
 import { useLoginMutation } from "../generated/graphql";
 import useGlobalStyles from "../styles/GlobalStyles";
+import checkIsAuth from "../utils/checkIsAuth";
 import CreateUrqlClient from "../utils/CreateUrqlClient";
 import { mapError } from "../utils/mapError";
 import { validateLoginForm } from "../utils/validations";
@@ -21,7 +22,7 @@ const login: React.FC<loginProps> = ({}) => {
 
   const [, login] = useLoginMutation();
   const router = useRouter();
-
+  checkIsAuth();
   return (
     <Layout variant="small">
       <Typography variant="h2" color="primary">

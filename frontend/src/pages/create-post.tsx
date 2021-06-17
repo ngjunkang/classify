@@ -8,12 +8,12 @@ import LoadingButton from "../components/LoadingButton";
 import StandardTextField from "../components/StandardTextField";
 import TextAreaField from "../components/TextAreaField";
 import { useCreatePostMutation } from "../generated/graphql";
-import checkIsAuth from "../utils/checkIsAuth";
+import checkIsNotAuth from "../utils/checkIsNotAuth";
 import CreateUrqlClient from "../utils/CreateUrqlClient";
 
 const CreatePost: React.FC<{}> = ({}) => {
   const router = useRouter();
-  checkIsAuth();
+  checkIsNotAuth();
   const [, CreatePost] = useCreatePostMutation();
   return (
     <Layout variant="small">

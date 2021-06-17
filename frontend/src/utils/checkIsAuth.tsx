@@ -7,8 +7,15 @@ const checkIsAuth = () => {
   const router: NextRouter = useRouter();
 
   useEffect(() => {
-    if (!fetching && !data?.me) {
-      router.replace("/login?next=" + router.pathname);
+    //check for authentication
+    if (!fetching && data?.me) {
+      let route: string;
+      if (typeof router.query?.next === "string") {
+        route = router.query.next;
+      } else {
+        route = "/";
+      }
+      router.replace(route);
     }
   }, [fetching, data, router]);
 };

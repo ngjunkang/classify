@@ -8,6 +8,7 @@ import LoadingButton from "../components/LoadingButton";
 import PasswordInputField from "../components/PasswordTextField";
 import StandardTextField from "../components/StandardTextField";
 import { useRegisterMutation } from "../generated/graphql";
+import checkIsAuth from "../utils/checkIsAuth";
 import CreateUrqlClient from "../utils/CreateUrqlClient";
 import { mapError } from "../utils/mapError";
 import { validateRegisterForm } from "../utils/validations";
@@ -19,6 +20,7 @@ const register: React.FC<registerProps> = ({}) => {
   const [, register] = useRegisterMutation();
   const router = useRouter();
 
+  checkIsAuth();
   return (
     <Layout variant="small">
       <Typography variant="h2" color="primary">
