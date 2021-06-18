@@ -1,15 +1,22 @@
-import { dedupExchange, fetchExchange, stringifyVariables } from "urql";
 import {
-  cacheExchange,
   Cache,
+  cacheExchange,
   QueryInput,
   Resolver,
 } from "@urql/exchange-graphcache";
+import Router from "next/router";
+import {
+  dedupExchange,
+  Exchange,
+  fetchExchange,
+  stringifyVariables,
+} from "urql";
+import { pipe, tap } from "wonka";
 import {
   LoginMutation,
-  MeQuery,
-  MeDocument,
   LogoutMutation,
+  MeDocument,
+  MeQuery,
   RegisterMutation,
   ResetPasswordMutation,
 } from "../generated/graphql";
@@ -25,6 +32,17 @@ function updateCacheQuery<Result, Query>(
     (data) => func(result, data as any) as any
   );
 }
+
+const errorExchange: Exchange = ({ forward }) => (ops$) => {
+  return pipe(
+    forward(ops$),
+    tap(({ error }) => {
+      if (error?.message.includes("not authenticated")) {
+        Router.replace("/login?next=" + Router.pathname);
+      }
+    })
+  );
+};
 
 export const cursorPagination = (): Resolver => {
   return (_parent, fieldArgs, cache, info) => {
@@ -143,6 +161,7 @@ const CreateUrqlClient = (ssrExchange: any) => ({
         },
       },
     }),
+    errorExchange,
     ssrExchange,
     fetchExchange,
   ],
