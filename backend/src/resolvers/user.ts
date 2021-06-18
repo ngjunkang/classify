@@ -29,7 +29,7 @@ class UserResponse {
 }
 
 @ObjectType()
-class FieldError {
+export class FieldError {
   @Field()
   field: string;
 
