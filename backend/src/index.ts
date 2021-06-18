@@ -14,6 +14,8 @@ import cors from "cors";
 import { PostResolver } from "./resolvers/post";
 import "dotenv-safe/config";
 import helmet from "helmet";
+import { GroupResolver } from "./resolvers/group";
+import { MiscResolver } from "./resolvers/misc";
 
 const main = async () => {
   await createConnection(typeOrmConfig);
@@ -55,7 +57,13 @@ const main = async () => {
 
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
-      resolvers: [HelloResolver, UserResolver, PostResolver],
+      resolvers: [
+        HelloResolver,
+        UserResolver,
+        PostResolver,
+        GroupResolver,
+        MiscResolver,
+      ],
       validate: false,
     }),
     context: ({ req, res }) => ({ req, res, redis }),
