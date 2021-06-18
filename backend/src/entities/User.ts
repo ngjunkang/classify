@@ -8,6 +8,12 @@ import {
   BaseEntity,
   OneToMany,
 } from "typeorm";
+import { Group } from "./Group";
+import { GroupInvite } from "./GroupInvite";
+import { GroupMessage } from "./GroupMessage";
+import { GroupRequest } from "./GroupRequest";
+import { GroupUser } from "./GroupUser";
+import { Membership } from "./Membership";
 import { Post } from "./Post";
 
 @ObjectType()
@@ -19,8 +25,26 @@ export class User extends BaseEntity {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @OneToMany(() => Post, post => post.creator)
+  @OneToMany(() => Post, (post) => post.creator)
   posts: Post[];
+
+  @OneToMany(() => Group, (group) => group.creator)
+  groups: Group[];
+
+  @OneToMany(() => GroupUser, (groupUser) => groupUser.creator)
+  groupUsers: GroupUser[];
+
+  @OneToMany(() => Membership, (membership) => membership.member)
+  memberships: Membership[];
+
+  @OneToMany(() => GroupMessage, (groupMessage) => groupMessage.creator)
+  groupMessages: GroupMessage[];
+
+  @OneToMany(() => GroupInvite, (groupInvite) => groupInvite.invitee)
+  groupInvites: GroupInvite[];
+
+  @OneToMany(() => GroupRequest, (groupRequest) => groupRequest.requestee)
+  groupRequests: GroupRequest[];
 
   @Field(() => String)
   @CreateDateColumn()
