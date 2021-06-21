@@ -20,15 +20,25 @@ import {
   KeyboardArrowDown,
   Delete,
   Edit,
+  TrendingUpRounded,
 } from "@material-ui/icons";
+import NextLink from "next/link";
+import { UpvoteSection } from "../components/UpvoteSection";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     flexBoxCol: {
       margin: 2,
-      display: "flex",
+      display: "",
       flexDirection: "column",
       alignItems: "center",
+    },
+    flexBoxRight: {
+      margin: 2,
+      justifyContent: "flex-end",
+      display: "flex",
+      flexDirection: "row",
+      alignItems: "right",
     },
     flexBox: {
       display: "flex",
@@ -59,12 +69,17 @@ const Forum = () => {
         me?.me ? ", " + me.me.username : ""
       }! Please follow for more updates! Feel free to test the login/register/reset password/forgot password functions`}</div>
       <br />
-      <Container>
+      <Container key="contain it">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((id) => (
-          <Button>Topic {id}</Button>
+          <Button key={id}>Topic {id}</Button>
         ))}
         <Button> + </Button>
       </Container>
+      <Box className={styles.flexBoxRight}>
+        <NextLink href="/create-post">
+          <Button> create post</Button>
+        </NextLink>
+      </Box>
       {!fetching && !data ? (
         <div>your get query failed for some reason</div>
       ) : fetching && !data ? (
@@ -74,15 +89,7 @@ const Forum = () => {
           {data!.posts.posts.map((p) => (
             <Grid item xs={12}>
               <Paper key={p.id} className={styles.flexBox} elevation={2}>
-                <Box className={styles.flexBoxCol}>
-                  <IconButton>
-                    <KeyboardArrowUp />
-                  </IconButton>
-                  <Typography>{p.points}</Typography>
-                  <IconButton>
-                    <KeyboardArrowDown />
-                  </IconButton>
-                </Box>
+                <UpvoteSection post={p} />
                 <Box className={styles.flexGrowContent}>
                   <h3>{p.title}</h3>
                   <h4>{p.textSnippet}</h4>
@@ -116,4 +123,4 @@ const Forum = () => {
   );
 };
 
-export default withUrqlClient(CreateUrqlClient, { ssr: false })(Forum);
+export default withUrqlClient(CreateUrqlClient, { ssr: true })(Forum);

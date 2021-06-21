@@ -9,6 +9,7 @@ import { GroupMessage } from "./entities/GroupMessage";
 import { GroupRequest } from "./entities/GroupRequest";
 import { GroupUser } from "./entities/GroupUser";
 import { Membership } from "./entities/Membership";
+import { Upvote } from "./entities/Upvote";
 
 export default {
   type: "postgres",
@@ -18,6 +19,7 @@ export default {
   entities: [
     User,
     Post,
+    Upvote,
     Group,
     GroupInvite,
     GroupRequest,

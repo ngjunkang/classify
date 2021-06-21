@@ -28,7 +28,7 @@ const CreatePost: React.FC<{}> = ({}) => {
         onSubmit={async (data) => {
           const { error } = await CreatePost({ details: data });
           if (!error) {
-            router.push("/");
+            router.push("/forum");
           }
         }}
       >

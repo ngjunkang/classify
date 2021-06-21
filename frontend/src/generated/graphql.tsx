@@ -25,9 +25,92 @@ export type FieldError = {
   message: Scalars['String'];
 };
 
+export type Group = {
+  __typename?: 'Group';
+  id: Scalars['Float'];
+  createdAt: Scalars['String'];
+  updatedAt: Scalars['String'];
+  creator_id: Scalars['Int'];
+  module_id?: Maybe<Scalars['Int']>;
+  name: Scalars['String'];
+  description: Scalars['String'];
+  requirements: Scalars['String'];
+  slug: Scalars['String'];
+  is_private: Scalars['Boolean'];
+  module?: Maybe<Module>;
+  members: Array<User>;
+  requests: Array<GroupRequest>;
+  invite?: Maybe<GroupInvite>;
+};
+
+export type GroupCreationInput = {
+  name: Scalars['String'];
+  description: Scalars['String'];
+  requirements: Scalars['String'];
+  moduleId: Scalars['Float'];
+  isPrivate: Scalars['Boolean'];
+};
+
+export type GroupInfo = {
+  __typename?: 'GroupInfo';
+  id: Scalars['Int'];
+  name: Scalars['String'];
+  description: Scalars['String'];
+  requirements: Scalars['String'];
+  slug: Scalars['String'];
+  isPrivate: Scalars['Boolean'];
+  isMember: Scalars['Boolean'];
+  module?: Maybe<Module>;
+  isLeader?: Maybe<Scalars['Boolean']>;
+  invite?: Maybe<GroupInvite>;
+  requests?: Maybe<Array<GroupRequest>>;
+  members?: Maybe<Array<User>>;
+};
+
+export type GroupInvite = {
+  __typename?: 'GroupInvite';
+  createdAt: Scalars['String'];
+  updatedAt: Scalars['String'];
+  user_id: Scalars['Int'];
+  group_id: Scalars['Int'];
+};
+
+export type GroupRequest = {
+  __typename?: 'GroupRequest';
+  createdAt: Scalars['String'];
+  updatedAt: Scalars['String'];
+  user_id: Scalars['Int'];
+  group_id: Scalars['Int'];
+};
+
+export type GroupResponse = {
+  __typename?: 'GroupResponse';
+  errors?: Maybe<Array<FieldError>>;
+  group?: Maybe<Group>;
+};
+
+export type InviteToGroupByIdInput = {
+  groupId: Scalars['Int'];
+  userId: Scalars['Int'];
+};
+
+export type InviteToGroupByUserInput = {
+  groupId: Scalars['Int'];
+  username: Scalars['String'];
+};
+
 export type LoginInput = {
   emailOrUsername: Scalars['String'];
   password: Scalars['String'];
+};
+
+export type Module = {
+  __typename?: 'Module';
+  id: Scalars['Int'];
+  createdAt: Scalars['String'];
+  updatedAt: Scalars['String'];
+  code: Scalars['String'];
+  name: Scalars['String'];
 };
 
 export type Mutation = {
@@ -37,9 +120,17 @@ export type Mutation = {
   register: UserResponse;
   login: UserResponse;
   logout: Scalars['Boolean'];
+  vote: Scalars['Boolean'];
   createPost: Post;
   updatePost?: Maybe<Post>;
   deletePost: Scalars['Boolean'];
+  leaveGroup: Status;
+  replyRequest: Status;
+  replyInvite: Status;
+  requestToGroup: Status;
+  inviteToGroupByUsername: Status;
+  inviteToGroupById: Status;
+  createGroup: GroupResponse;
 };
 
 
@@ -63,6 +154,12 @@ export type MutationLoginArgs = {
 };
 
 
+export type MutationVoteArgs = {
+  value: Scalars['Int'];
+  postId: Scalars['Int'];
+};
+
+
 export type MutationCreatePostArgs = {
   details: CreatePostDetails;
 };
@@ -78,6 +175,41 @@ export type MutationDeletePostArgs = {
   id: Scalars['Float'];
 };
 
+
+export type MutationLeaveGroupArgs = {
+  groupId: Scalars['Int'];
+};
+
+
+export type MutationReplyRequestArgs = {
+  input: ReplyRequestInput;
+};
+
+
+export type MutationReplyInviteArgs = {
+  input: ReplyInviteInput;
+};
+
+
+export type MutationRequestToGroupArgs = {
+  groupId: Scalars['Int'];
+};
+
+
+export type MutationInviteToGroupByUsernameArgs = {
+  input: InviteToGroupByUserInput;
+};
+
+
+export type MutationInviteToGroupByIdArgs = {
+  input: InviteToGroupByIdInput;
+};
+
+
+export type MutationCreateGroupArgs = {
+  input: GroupCreationInput;
+};
+
 export type PaginatedPosts = {
   __typename?: 'PaginatedPosts';
   posts: Array<Post>;
@@ -88,7 +220,9 @@ export type Post = {
   __typename?: 'Post';
   id: Scalars['Float'];
   creatorId: Scalars['Float'];
+  creator: User;
   points: Scalars['Float'];
+  voteStatus?: Maybe<Scalars['Int']>;
   createdAt: Scalars['String'];
   updatedAt: Scalars['String'];
   title: Scalars['String'];
@@ -102,6 +236,10 @@ export type Query = {
   me?: Maybe<User>;
   posts: PaginatedPosts;
   post?: Maybe<Post>;
+  group?: Maybe<GroupInfo>;
+  myGroups: Array<Group>;
+  groups: Array<Group>;
+  modules: Array<Module>;
 };
 
 
@@ -115,6 +253,11 @@ export type QueryPostArgs = {
   id: Scalars['Float'];
 };
 
+
+export type QueryGroupArgs = {
+  slug: Scalars['String'];
+};
+
 export type RegisterInput = {
   email: Scalars['String'];
   username: Scalars['String'];
@@ -122,9 +265,26 @@ export type RegisterInput = {
   displayName: Scalars['String'];
 };
 
+export type ReplyInviteInput = {
+  groupId: Scalars['Int'];
+  accept: Scalars['Boolean'];
+};
+
+export type ReplyRequestInput = {
+  groupId: Scalars['Int'];
+  userId: Scalars['Int'];
+  accept: Scalars['Boolean'];
+};
+
 export type ResetPasswordInput = {
   token: Scalars['String'];
   password: Scalars['String'];
+};
+
+export type Status = {
+  __typename?: 'Status';
+  message: Scalars['String'];
+  success: Scalars['Boolean'];
 };
 
 export type User = {
@@ -146,6 +306,15 @@ export type UserResponse = {
 export type ErrorDetailsFragment = (
   { __typename?: 'FieldError' }
   & Pick<FieldError, 'field' | 'message'>
+);
+
+export type PostSnippetFragment = (
+  { __typename?: 'Post' }
+  & Pick<Post, 'id' | 'createdAt' | 'updatedAt' | 'title' | 'points' | 'voteStatus' | 'textSnippet'>
+  & { creator: (
+    { __typename?: 'User' }
+    & Pick<User, 'id' | 'username'>
+  ) }
 );
 
 export type UserDetailsFragment = (
@@ -246,6 +415,17 @@ export type ResetPasswordMutation = (
   ) }
 );
 
+export type VoteMutationVariables = Exact<{
+  value: Scalars['Int'];
+  postId: Scalars['Int'];
+}>;
+
+
+export type VoteMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'vote'>
+);
+
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -270,7 +450,7 @@ export type PostsQuery = (
     & Pick<PaginatedPosts, 'hasMore'>
     & { posts: Array<(
       { __typename?: 'Post' }
-      & Pick<Post, 'id' | 'createdAt' | 'updatedAt' | 'title' | 'textSnippet' | 'points'>
+      & PostSnippetFragment
     )> }
   ) }
 );
@@ -279,6 +459,21 @@ export const ErrorDetailsFragmentDoc = gql`
     fragment ErrorDetails on FieldError {
   field
   message
+}
+    `;
+export const PostSnippetFragmentDoc = gql`
+    fragment PostSnippet on Post {
+  id
+  createdAt
+  updatedAt
+  title
+  points
+  voteStatus
+  textSnippet
+  creator {
+    id
+    username
+  }
 }
     `;
 export const UserDetailsFragmentDoc = gql`
@@ -375,6 +570,15 @@ ${UserDetailsFragmentDoc}`;
 export function useResetPasswordMutation() {
   return Urql.useMutation<ResetPasswordMutation, ResetPasswordMutationVariables>(ResetPasswordDocument);
 };
+export const VoteDocument = gql`
+    mutation Vote($value: Int!, $postId: Int!) {
+  vote(value: $value, postId: $postId)
+}
+    `;
+
+export function useVoteMutation() {
+  return Urql.useMutation<VoteMutation, VoteMutationVariables>(VoteDocument);
+};
 export const MeDocument = gql`
     query Me {
   me {
@@ -391,16 +595,11 @@ export const PostsDocument = gql`
   posts(limit: $limit, cursor: $cursor) {
     hasMore
     posts {
-      id
-      createdAt
-      updatedAt
-      title
-      textSnippet
-      points
+      ...PostSnippet
     }
   }
 }
-    `;
+    ${PostSnippetFragmentDoc}`;
 
 export function usePostsQuery(options: Omit<Urql.UseQueryArgs<PostsQueryVariables>, 'query'> = {}) {
   return Urql.useQuery<PostsQuery>({ query: PostsDocument, ...options });
