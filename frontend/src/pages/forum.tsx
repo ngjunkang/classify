@@ -1,29 +1,22 @@
-import { withUrqlClient } from "next-urql";
-import Layout from "../components/Layout";
-import CreateUrqlClient from "../utils/CreateUrqlClient";
-import { useMeQuery, usePostsQuery } from "../generated/graphql";
-import isServer from "../utils/isServer";
-import React, { useState } from "react";
 import {
+  Box,
   Button,
   Container,
-  Box,
-  Paper,
   Grid,
-  Theme,
   IconButton,
+  Paper,
+  Theme,
 } from "@material-ui/core";
-import { makeStyles, createStyles } from "@material-ui/core/styles";
-import Typography from "@material-ui/core/Typography";
-import {
-  KeyboardArrowUp,
-  KeyboardArrowDown,
-  Delete,
-  Edit,
-  TrendingUpRounded,
-} from "@material-ui/icons";
+import { createStyles, makeStyles } from "@material-ui/core/styles";
+import { Delete, Edit } from "@material-ui/icons";
+import { withUrqlClient } from "next-urql";
 import NextLink from "next/link";
+import React, { useState } from "react";
+import Layout from "../components/Layout";
 import { UpvoteSection } from "../components/UpvoteSection";
+import { useMeQuery, usePostsQuery } from "../generated/graphql";
+import CreateUrqlClient from "../utils/CreateUrqlClient";
+import isServer from "../utils/isServer";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -89,7 +82,7 @@ const Forum = () => {
           {data!.posts.posts.map((p) => (
             <Grid item xs={12}>
               <Paper key={p.id} className={styles.flexBox} elevation={2}>
-                <UpvoteSection post={p} />
+                <UpvoteSection post={p} loggedIn={me?.me ? true : false} />
                 <Box className={styles.flexGrowContent}>
                   <h3>{p.title}</h3>
                   <h4>{p.textSnippet}</h4>

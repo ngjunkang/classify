@@ -6,6 +6,7 @@ import { PostSnippetFragment, useVoteMutation } from "../generated/graphql";
 
 interface UpvoteSectionProps {
   post: PostSnippetFragment;
+  loggedIn: boolean;
 }
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -30,7 +31,10 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
-export const UpvoteSection: React.FC<UpvoteSectionProps> = ({ post }) => {
+export const UpvoteSection: React.FC<UpvoteSectionProps> = ({
+  post,
+  loggedIn,
+}) => {
   const [loadingState, setLoadingState] = useState<
     "upvote-loading" | "downvote-loading" | "not-loading"
   >("not-loading");
@@ -50,7 +54,7 @@ export const UpvoteSection: React.FC<UpvoteSectionProps> = ({ post }) => {
           });
           setLoadingState("not-loading");
         }}
-        color={post.voteStatus === 1 ? "primary" : "default"}
+        color={loggedIn && post.voteStatus === 1 ? "primary" : "default"}
       >
         <KeyboardArrowUp />
       </IconButton>
@@ -67,7 +71,7 @@ export const UpvoteSection: React.FC<UpvoteSectionProps> = ({ post }) => {
           });
           setLoadingState("not-loading");
         }}
-        color={post.voteStatus === -1 ? "primary" : "default"}
+        color={loggedIn && post.voteStatus === -1 ? "primary" : "default"}
       >
         <KeyboardArrowDown />
       </IconButton>
