@@ -4,6 +4,7 @@ import {
   Container,
   Grid,
   IconButton,
+  Link,
   Paper,
   Theme,
 } from "@material-ui/core";
@@ -11,10 +12,15 @@ import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { Delete, Edit } from "@material-ui/icons";
 import { withUrqlClient } from "next-urql";
 import NextLink from "next/link";
+import { useRouter } from "next/router";
 import React, { useState } from "react";
 import Layout from "../components/Layout";
 import { UpvoteSection } from "../components/UpvoteSection";
-import { useMeQuery, usePostsQuery } from "../generated/graphql";
+import {
+  useDeletePostMutation,
+  useMeQuery,
+  usePostsQuery,
+} from "../generated/graphql";
 import CreateUrqlClient from "../utils/CreateUrqlClient";
 import isServer from "../utils/isServer";
 
@@ -43,6 +49,7 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 const Forum = () => {
+  const router = useRouter();
   const styles = useStyles();
   const [variables, setVariables] = useState({
     limit: 2,
@@ -55,6 +62,8 @@ const Forum = () => {
   const [{ data: me }] = useMeQuery({
     pause: isServer(),
   });
+
+  const [, deletePost] = useDeletePostMutation();
 
   return (
     <Layout variant="regular">
@@ -79,25 +88,41 @@ const Forum = () => {
         <div>Loading...</div>
       ) : (
         <Grid container spacing={2} direction="column">
-          {data!.posts.posts.map((p) => (
-            <Grid item xs={12}>
-              <Paper key={p.id} className={styles.flexBox} elevation={2}>
-                <UpvoteSection post={p} loggedIn={me?.me ? true : false} />
-                <Box className={styles.flexGrowContent}>
-                  <h3>{p.title}</h3>
-                  <h4>{p.textSnippet}</h4>
-                </Box>
-                <Box>
-                  <IconButton>
-                    <Delete />
-                  </IconButton>
-                  <IconButton>
-                    <Edit />
-                  </IconButton>
-                </Box>
-              </Paper>
-            </Grid>
-          ))}
+          {data!.posts.posts.map((p) =>
+            !p ? null : (
+              <Grid item xs={12}>
+                <Paper key={p.id} className={styles.flexBox} elevation={2}>
+                  <UpvoteSection post={p} loggedIn={me?.me ? true : false} />
+                  <Box className={styles.flexGrowContent}>
+                    <NextLink href="/post/[id]" as={`/post/${p.id}`}>
+                      <Link>
+                        <h3>{p.title}</h3>
+                      </Link>
+                    </NextLink>
+                    <text>{p.textSnippet}</text>
+                  </Box>
+                  {me?.me?.id !== p.creator.id ? null : (
+                    <Box>
+                      <IconButton
+                        onClick={() => {
+                          deletePost({ id: p.id });
+                        }}
+                      >
+                        <Delete />
+                      </IconButton>
+                      <IconButton
+                        onClick={() => {
+                          router.push(`/post/edit/${p.id}`);
+                        }}
+                      >
+                        <Edit />
+                      </IconButton>
+                    </Box>
+                  )}
+                </Paper>
+              </Grid>
+            )
+          )}
         </Grid>
       )}
       {data && data.posts.hasMore ? (
