@@ -1,7 +1,6 @@
 import {
   Box,
   Button,
-  Container,
   Grid,
   IconButton,
   Link,
@@ -24,6 +23,7 @@ import {
 import CreateUrqlClient from "../utils/CreateUrqlClient";
 import isServer from "../utils/isServer";
 import { Typography } from "@material-ui/core";
+import ErrorIcon from "@material-ui/icons/Error";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -75,12 +75,12 @@ const Forum = () => {
         me?.me ? ", " + me.me.username : ""
       }! Please test out our forum functions`}</div>
       <br />
-      <Container key="contain it">
+      {/* <Container key="contain it">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((id) => (
           <Button key={id}>Topic {id}</Button>
         ))}
         <Button> + </Button>
-      </Container>
+      </Container> */}
       <Box className={styles.flexBoxRight}>
         <NextLink href="/create-post">
           <Button> create post</Button>
@@ -92,39 +92,45 @@ const Forum = () => {
         <div>Loading...</div>
       ) : (
         <Grid container spacing={2} direction="column">
-          {data!.posts.posts.map((p) =>
-            !p ? null : (
-              <Grid item xs={12}>
-                <Paper key={p.id} className={styles.flexBox} elevation={2}>
-                  <UpvoteSection post={p} loggedIn={me?.me ? true : false} />
-                  <Box className={styles.flexGrowContent}>
-                    <NextLink href="/post/[id]" as={`/post/${p.id}`}>
-                      <Link>
-                        <h3>{p.title}</h3>
-                      </Link>
-                    </NextLink>
-                    <text>{p.textSnippet}</text>
-                  </Box>
-                  {me?.me?.id !== p.creator.id ? null : (
-                    <Box>
-                      <IconButton
-                        onClick={() => {
-                          deletePost({ id: p.id });
-                        }}
-                      >
-                        <Delete />
-                      </IconButton>
-                      <IconButton
-                        onClick={() => {
-                          router.push(`/post/chalk/${p.id}`);
-                        }}
-                      >
-                        <Edit />
-                      </IconButton>
+          {data!.posts.posts.length <= 0 ? (
+            <div>
+              <text>no posts yet, create one!</text>
+            </div>
+          ) : (
+            data!.posts.posts.map((p) =>
+              !p ? null : (
+                <Grid item xs={12}>
+                  <Paper key={p.id} className={styles.flexBox} elevation={2}>
+                    <UpvoteSection post={p} loggedIn={me?.me ? true : false} />
+                    <Box className={styles.flexGrowContent}>
+                      <NextLink href="/post/[id]" as={`/post/${p.id}`}>
+                        <Link>
+                          <h3>{p.title}</h3>
+                        </Link>
+                      </NextLink>
+                      <text>{p.textSnippet}</text>
                     </Box>
-                  )}
-                </Paper>
-              </Grid>
+                    {me?.me?.id !== p.creator.id ? null : (
+                      <Box>
+                        <IconButton
+                          onClick={() => {
+                            deletePost({ id: p.id });
+                          }}
+                        >
+                          <Delete />
+                        </IconButton>
+                        <IconButton
+                          onClick={() => {
+                            router.push(`/post/chalk/${p.id}`);
+                          }}
+                        >
+                          <Edit />
+                        </IconButton>
+                      </Box>
+                    )}
+                  </Paper>
+                </Grid>
+              )
             )
           )}
         </Grid>
