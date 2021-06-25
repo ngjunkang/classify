@@ -23,6 +23,7 @@ import {
 } from "../generated/graphql";
 import CreateUrqlClient from "../utils/CreateUrqlClient";
 import isServer from "../utils/isServer";
+import { Typography } from "@material-ui/core";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -67,6 +68,9 @@ const Forum = () => {
 
   return (
     <Layout variant="regular">
+      <Typography variant="h2" color="primary">
+        Whiteboard
+      </Typography>
       <div>{`Welcome${
         me?.me ? ", " + me.me.username : ""
       }! Please test out our forum functions`}</div>
