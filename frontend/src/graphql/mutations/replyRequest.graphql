@@ -1,0 +1,5 @@
+mutation ReplyRequest($input: ReplyRequestInput!) {
+  replyRequest(input: $input) {
+    ...StatusResponse
+  }
+}
