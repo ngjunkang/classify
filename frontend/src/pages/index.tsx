@@ -1,30 +1,30 @@
+import { Link, Typography } from "@material-ui/core";
 import { withUrqlClient } from "next-urql";
-import Layout from "../components/Layout";
-import CreateUrqlClient from "../utils/CreateUrqlClient";
-import { useMeQuery, usePostsQuery } from "../generated/graphql";
-import isServer from "../utils/isServer";
 import NextLink from "next/link";
 import React from "react";
-import { Link } from "@material-ui/core";
+import Layout from "../components/Layout";
+import { useMeQuery } from "../generated/graphql";
+import CreateUrqlClient from "../utils/CreateUrqlClient";
+import isServer from "../utils/isServer";
 
 const Index = () => {
-  const [{ data, fetching }] = usePostsQuery();
   const [{ data: me }] = useMeQuery({
     pause: isServer(),
   });
 
   return (
     <Layout variant="regular">
-      <div>{`Welcome${
+      <Typography>{`Welcome${
         me?.me ? ", " + me.me.username : ""
-      }! Please follow for more updates! Feel free to test the whiteboard and the cliques features!`}</div>
+      }! Please follow for more updates! Feel free to test the whiteboard and the cliques features!`}</Typography>
       <br />
-      <NextLink href="/create-post">
-        <Link>create post </Link>
+
+      <NextLink href="/whiteboard">
+        <Link>Whiteboard</Link>
       </NextLink>
       <br />
-      <NextLink href="/whiteboard">
-        <Link> whiteboard</Link>
+      <NextLink href="/class/cliques">
+        <Link>Cliques</Link>
       </NextLink>
     </Layout>
   );
