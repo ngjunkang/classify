@@ -1,0 +1,5 @@
+mutation EditGroup($input: GroupEditInput!) {
+  editGroup(input: $input) {
+    ...StatusResponse
+  }
+}
