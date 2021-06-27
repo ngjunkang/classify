@@ -376,11 +376,7 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
               handleOnChange={(e, value) =>
                 setFieldValue("module_id", !value ? 0 : value.id)
               }
-              initialValue={{
-                id: module ? module.id : 0,
-                code: module.code,
-                name: module.name,
-              }}
+              {...(module ? { initialValue: module } : null)}
             />
             <CheckBoxField
               name="is_private"
