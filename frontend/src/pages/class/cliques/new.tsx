@@ -10,13 +10,14 @@ import ModuleSelection from "../../../components/ModuleSelection";
 import StandardTextField from "../../../components/StandardTextField";
 import TextAreaField from "../../../components/TextAreaField";
 import { useCreateGroupMutation } from "../../../generated/graphql";
+import checkIsNotAuth from "../../../utils/checkIsNotAuth";
 import CreateUrqlClient from "../../../utils/CreateUrqlClient";
 import { mapError } from "../../../utils/mapError";
 
 interface CreateNewCliqueProps {}
 
 const CreateNewClique: React.FC<CreateNewCliqueProps> = ({}) => {
-  // checkIsNotAuth();
+  checkIsNotAuth();
   const [, createGroup] = useCreateGroupMutation();
   const router = useRouter();
 
@@ -40,7 +41,12 @@ const CreateNewClique: React.FC<CreateNewCliqueProps> = ({}) => {
           if (res.data?.createGroup.errors) {
             setErrors(mapError(res.data.createGroup.errors));
           } else if (res.data?.createGroup.group) {
-            router.push("/");
+            const group = res.data.createGroup.group;
+            if (group.is_private) {
+              router.push(`/class/cliques/${group.slug}`);
+            } else {
+              router.push("/class/cliques");
+            }
           }
         }}
       >
