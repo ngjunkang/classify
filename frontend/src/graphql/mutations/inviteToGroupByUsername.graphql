@@ -1,0 +1,5 @@
+mutation InviteByUserName($input: InviteToGroupByUserInput!) {
+  inviteToGroupByUsername(input: $input) {
+    ...StatusResponse
+  }
+}
