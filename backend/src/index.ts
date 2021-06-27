@@ -16,6 +16,7 @@ import "dotenv-safe/config";
 import helmet from "helmet";
 import { GroupResolver } from "./resolvers/group";
 import { MiscResolver } from "./resolvers/misc";
+import createModuleLoader from "./utils/createModuleLoader";
 
 const main = async () => {
   await createConnection(typeOrmConfig);
@@ -66,7 +67,12 @@ const main = async () => {
       ],
       validate: false,
     }),
-    context: ({ req, res }) => ({ req, res, redis }),
+    context: ({ req, res }) => ({
+      req,
+      res,
+      redis,
+      moduleLoader: createModuleLoader(),
+    }),
   });
 
   apolloServer.applyMiddleware({ app, cors: false });
