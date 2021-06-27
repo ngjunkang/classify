@@ -23,6 +23,7 @@ import Button from "@material-ui/core/Button";
 import { useMeQuery, useLogoutMutation } from "../generated/graphql";
 import isServer from "../utils/isServer";
 import NextLink from "next/link";
+import SideBar from "./SideBar";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -107,6 +108,21 @@ const NavBar: React.FC<NavBarProps> = () => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] =
     React.useState<null | HTMLElement>(null);
+
+  const [open, setOpen] = React.useState(false);
+
+  const toggleDrawer =
+    (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
+      if (
+        event.type === "keydown" &&
+        ((event as React.KeyboardEvent).key === "Tab" ||
+          (event as React.KeyboardEvent).key === "Shift")
+      ) {
+        return;
+      }
+
+      setOpen(open);
+    };
 
   const isMenuOpen = Boolean(anchorEl);
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
@@ -257,6 +273,7 @@ const NavBar: React.FC<NavBarProps> = () => {
             className={classes.menuButton}
             color="inherit"
             aria-label="open drawer"
+            onClick={toggleDrawer(true)}
           >
             <MenuIcon />
           </IconButton>
@@ -282,6 +299,7 @@ const NavBar: React.FC<NavBarProps> = () => {
           {navBarOptions}
         </Toolbar>
       </AppBar>
+      <SideBar toggleDrawer={toggleDrawer} open={open} />
       {renderMobileMenu}
       {renderMenu}
     </div>
