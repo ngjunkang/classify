@@ -109,7 +109,7 @@ const GroupListItem: React.FC<Partial<Group> & GroupListItemProps> = ({
 
   let groupName = (
     <Typography variant="h4" className={classes.groupName}>
-      <Skeleton />
+      <Skeleton width="100%" />
     </Typography>
   );
   if (!isLoading) {
