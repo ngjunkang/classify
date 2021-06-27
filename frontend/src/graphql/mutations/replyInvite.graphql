@@ -1,0 +1,5 @@
+mutation ReplyInvite($input: ReplyInviteInput!) {
+  replyInvite(input: $input) {
+    ...StatusResponse
+  }
+}
