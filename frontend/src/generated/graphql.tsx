@@ -329,7 +329,7 @@ export type CreateGroupMutation = (
       & ErrorDetailsFragment
     )>>, group?: Maybe<(
       { __typename?: 'Group' }
-      & Pick<Group, 'id' | 'name' | 'description' | 'requirements' | 'module_id' | 'is_private'>
+      & Pick<Group, 'id' | 'name' | 'description' | 'requirements' | 'module_id' | 'is_private' | 'slug'>
     )> }
   ) }
 );
@@ -672,6 +672,7 @@ export const CreateGroupDocument = gql`
       requirements
       module_id
       is_private
+      slug
     }
   }
 }
