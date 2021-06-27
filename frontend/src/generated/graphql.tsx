@@ -38,49 +38,27 @@ export type Group = {
   slug: Scalars['String'];
   is_private: Scalars['Boolean'];
   module?: Maybe<Module>;
+  isLeader: Scalars['Boolean'];
+  isMember: Scalars['Boolean'];
   members: Array<User>;
-  requests: Array<GroupRequest>;
-  invite?: Maybe<GroupInvite>;
+  requests: Array<User>;
+  invite: Scalars['Boolean'];
 };
 
 export type GroupCreationInput = {
   name: Scalars['String'];
   description: Scalars['String'];
   requirements: Scalars['String'];
-  moduleId: Scalars['Float'];
-  isPrivate: Scalars['Boolean'];
+  module_id: Scalars['Float'];
+  is_private: Scalars['Boolean'];
 };
 
-export type GroupInfo = {
-  __typename?: 'GroupInfo';
+export type GroupEditInput = {
   id: Scalars['Int'];
-  name: Scalars['String'];
   description: Scalars['String'];
   requirements: Scalars['String'];
-  slug: Scalars['String'];
-  isPrivate: Scalars['Boolean'];
-  isMember: Scalars['Boolean'];
-  module?: Maybe<Module>;
-  isLeader?: Maybe<Scalars['Boolean']>;
-  invite?: Maybe<GroupInvite>;
-  requests?: Maybe<Array<GroupRequest>>;
-  members?: Maybe<Array<User>>;
-};
-
-export type GroupInvite = {
-  __typename?: 'GroupInvite';
-  createdAt: Scalars['String'];
-  updatedAt: Scalars['String'];
-  user_id: Scalars['Int'];
-  group_id: Scalars['Int'];
-};
-
-export type GroupRequest = {
-  __typename?: 'GroupRequest';
-  createdAt: Scalars['String'];
-  updatedAt: Scalars['String'];
-  user_id: Scalars['Int'];
-  group_id: Scalars['Int'];
+  module_id: Scalars['Float'];
+  is_private: Scalars['Boolean'];
 };
 
 export type GroupResponse = {
@@ -107,8 +85,6 @@ export type LoginInput = {
 export type Module = {
   __typename?: 'Module';
   id: Scalars['Int'];
-  createdAt: Scalars['String'];
-  updatedAt: Scalars['String'];
   code: Scalars['String'];
   name: Scalars['String'];
 };
@@ -130,6 +106,7 @@ export type Mutation = {
   requestToGroup: Status;
   inviteToGroupByUsername: Status;
   inviteToGroupById: Status;
+  editGroup: Status;
   createGroup: GroupResponse;
 };
 
@@ -207,6 +184,11 @@ export type MutationInviteToGroupByIdArgs = {
 };
 
 
+export type MutationEditGroupArgs = {
+  input: GroupEditInput;
+};
+
+
 export type MutationCreateGroupArgs = {
   input: GroupCreationInput;
 };
@@ -237,7 +219,7 @@ export type Query = {
   me?: Maybe<User>;
   posts: PaginatedPosts;
   post?: Maybe<Post>;
-  group?: Maybe<GroupInfo>;
+  group?: Maybe<Group>;
   myGroups: Array<Group>;
   groups: Array<Group>;
   modules: Array<Module>;
@@ -257,6 +239,11 @@ export type QueryPostArgs = {
 
 export type QueryGroupArgs = {
   slug: Scalars['String'];
+};
+
+
+export type QueryGroupsArgs = {
+  moduleId: Scalars['Int'];
 };
 
 export type RegisterInput = {
@@ -318,9 +305,33 @@ export type PostSnippetFragment = (
   ) }
 );
 
+export type StatusResponseFragment = (
+  { __typename?: 'Status' }
+  & Pick<Status, 'message' | 'success'>
+);
+
 export type UserDetailsFragment = (
   { __typename?: 'User' }
-  & Pick<User, 'id' | 'username'>
+  & Pick<User, 'id' | 'username' | 'displayName'>
+);
+
+export type CreateGroupMutationVariables = Exact<{
+  details: GroupCreationInput;
+}>;
+
+
+export type CreateGroupMutation = (
+  { __typename?: 'Mutation' }
+  & { createGroup: (
+    { __typename?: 'GroupResponse' }
+    & { errors?: Maybe<Array<(
+      { __typename?: 'FieldError' }
+      & ErrorDetailsFragment
+    )>>, group?: Maybe<(
+      { __typename?: 'Group' }
+      & Pick<Group, 'id' | 'name' | 'description' | 'requirements' | 'module_id' | 'is_private'>
+    )> }
+  ) }
 );
 
 export type CreatePostMutationVariables = Exact<{
@@ -346,6 +357,19 @@ export type DeletePostMutation = (
   & Pick<Mutation, 'deletePost'>
 );
 
+export type EditGroupMutationVariables = Exact<{
+  input: GroupEditInput;
+}>;
+
+
+export type EditGroupMutation = (
+  { __typename?: 'Mutation' }
+  & { editGroup: (
+    { __typename?: 'Status' }
+    & StatusResponseFragment
+  ) }
+);
+
 export type ForgotPasswordMutationVariables = Exact<{
   email: Scalars['String'];
 }>;
@@ -354,6 +378,19 @@ export type ForgotPasswordMutationVariables = Exact<{
 export type ForgotPasswordMutation = (
   { __typename?: 'Mutation' }
   & Pick<Mutation, 'forgotPassword'>
+);
+
+export type InviteByUserNameMutationVariables = Exact<{
+  input: InviteToGroupByUserInput;
+}>;
+
+
+export type InviteByUserNameMutation = (
+  { __typename?: 'Mutation' }
+  & { inviteToGroupByUsername: (
+    { __typename?: 'Status' }
+    & StatusResponseFragment
+  ) }
 );
 
 export type LoginMutationVariables = Exact<{
@@ -406,6 +443,45 @@ export type RegisterMutation = (
   ) }
 );
 
+export type ReplyInviteMutationVariables = Exact<{
+  input: ReplyInviteInput;
+}>;
+
+
+export type ReplyInviteMutation = (
+  { __typename?: 'Mutation' }
+  & { replyInvite: (
+    { __typename?: 'Status' }
+    & StatusResponseFragment
+  ) }
+);
+
+export type ReplyRequestMutationVariables = Exact<{
+  input: ReplyRequestInput;
+}>;
+
+
+export type ReplyRequestMutation = (
+  { __typename?: 'Mutation' }
+  & { replyRequest: (
+    { __typename?: 'Status' }
+    & StatusResponseFragment
+  ) }
+);
+
+export type RequestToGroupMutationVariables = Exact<{
+  groupId: Scalars['Int'];
+}>;
+
+
+export type RequestToGroupMutation = (
+  { __typename?: 'Mutation' }
+  & { requestToGroup: (
+    { __typename?: 'Status' }
+    & StatusResponseFragment
+  ) }
+);
+
 export type ResetPasswordMutationVariables = Exact<{
   token: Scalars['String'];
   password: Scalars['String'];
@@ -452,6 +528,46 @@ export type VoteMutation = (
   & Pick<Mutation, 'vote'>
 );
 
+export type GroupQueryVariables = Exact<{
+  slug: Scalars['String'];
+}>;
+
+
+export type GroupQuery = (
+  { __typename?: 'Query' }
+  & { group?: Maybe<(
+    { __typename?: 'Group' }
+    & Pick<Group, 'id' | 'name' | 'description' | 'requirements' | 'slug' | 'is_private' | 'isMember' | 'isLeader' | 'invite'>
+    & { module?: Maybe<(
+      { __typename?: 'Module' }
+      & Pick<Module, 'id' | 'name' | 'code'>
+    )>, requests: Array<(
+      { __typename?: 'User' }
+      & UserDetailsFragment
+    )>, members: Array<(
+      { __typename?: 'User' }
+      & UserDetailsFragment
+    )> }
+  )> }
+);
+
+export type GroupsQueryVariables = Exact<{
+  moduleId: Scalars['Int'];
+}>;
+
+
+export type GroupsQuery = (
+  { __typename?: 'Query' }
+  & { groups: Array<(
+    { __typename?: 'Group' }
+    & Pick<Group, 'id' | 'name' | 'description' | 'requirements' | 'slug' | 'isMember' | 'isLeader'>
+    & { module?: Maybe<(
+      { __typename?: 'Module' }
+      & Pick<Module, 'id' | 'name' | 'code'>
+    )> }
+  )> }
+);
+
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -460,6 +576,17 @@ export type MeQuery = (
   & { me?: Maybe<(
     { __typename?: 'User' }
     & UserDetailsFragment
+  )> }
+);
+
+export type ModulesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ModulesQuery = (
+  { __typename?: 'Query' }
+  & { modules: Array<(
+    { __typename?: 'Module' }
+    & Pick<Module, 'id' | 'code' | 'name'>
   )> }
 );
 
@@ -519,12 +646,40 @@ export const PostSnippetFragmentDoc = gql`
   }
 }
     `;
+export const StatusResponseFragmentDoc = gql`
+    fragment StatusResponse on Status {
+  message
+  success
+}
+    `;
 export const UserDetailsFragmentDoc = gql`
     fragment UserDetails on User {
   id
   username
+  displayName
 }
     `;
+export const CreateGroupDocument = gql`
+    mutation CreateGroup($details: GroupCreationInput!) {
+  createGroup(input: $details) {
+    errors {
+      ...ErrorDetails
+    }
+    group {
+      id
+      name
+      description
+      requirements
+      module_id
+      is_private
+    }
+  }
+}
+    ${ErrorDetailsFragmentDoc}`;
+
+export function useCreateGroupMutation() {
+  return Urql.useMutation<CreateGroupMutation, CreateGroupMutationVariables>(CreateGroupDocument);
+};
 export const CreatePostDocument = gql`
     mutation CreatePost($details: CreatePostDetails!) {
   createPost(details: $details) {
@@ -551,6 +706,17 @@ export const DeletePostDocument = gql`
 export function useDeletePostMutation() {
   return Urql.useMutation<DeletePostMutation, DeletePostMutationVariables>(DeletePostDocument);
 };
+export const EditGroupDocument = gql`
+    mutation EditGroup($input: GroupEditInput!) {
+  editGroup(input: $input) {
+    ...StatusResponse
+  }
+}
+    ${StatusResponseFragmentDoc}`;
+
+export function useEditGroupMutation() {
+  return Urql.useMutation<EditGroupMutation, EditGroupMutationVariables>(EditGroupDocument);
+};
 export const ForgotPasswordDocument = gql`
     mutation ForgotPassword($email: String!) {
   forgotPassword(email: $email)
@@ -559,6 +725,17 @@ export const ForgotPasswordDocument = gql`
 
 export function useForgotPasswordMutation() {
   return Urql.useMutation<ForgotPasswordMutation, ForgotPasswordMutationVariables>(ForgotPasswordDocument);
+};
+export const InviteByUserNameDocument = gql`
+    mutation InviteByUserName($input: InviteToGroupByUserInput!) {
+  inviteToGroupByUsername(input: $input) {
+    ...StatusResponse
+  }
+}
+    ${StatusResponseFragmentDoc}`;
+
+export function useInviteByUserNameMutation() {
+  return Urql.useMutation<InviteByUserNameMutation, InviteByUserNameMutationVariables>(InviteByUserNameDocument);
 };
 export const LoginDocument = gql`
     mutation Login($emailOrUsername: String!, $password: String!) {
@@ -605,6 +782,39 @@ ${UserDetailsFragmentDoc}`;
 export function useRegisterMutation() {
   return Urql.useMutation<RegisterMutation, RegisterMutationVariables>(RegisterDocument);
 };
+export const ReplyInviteDocument = gql`
+    mutation ReplyInvite($input: ReplyInviteInput!) {
+  replyInvite(input: $input) {
+    ...StatusResponse
+  }
+}
+    ${StatusResponseFragmentDoc}`;
+
+export function useReplyInviteMutation() {
+  return Urql.useMutation<ReplyInviteMutation, ReplyInviteMutationVariables>(ReplyInviteDocument);
+};
+export const ReplyRequestDocument = gql`
+    mutation ReplyRequest($input: ReplyRequestInput!) {
+  replyRequest(input: $input) {
+    ...StatusResponse
+  }
+}
+    ${StatusResponseFragmentDoc}`;
+
+export function useReplyRequestMutation() {
+  return Urql.useMutation<ReplyRequestMutation, ReplyRequestMutationVariables>(ReplyRequestDocument);
+};
+export const RequestToGroupDocument = gql`
+    mutation RequestToGroup($groupId: Int!) {
+  requestToGroup(groupId: $groupId) {
+    ...StatusResponse
+  }
+}
+    ${StatusResponseFragmentDoc}`;
+
+export function useRequestToGroupMutation() {
+  return Urql.useMutation<RequestToGroupMutation, RequestToGroupMutationVariables>(RequestToGroupDocument);
+};
 export const ResetPasswordDocument = gql`
     mutation ResetPassword($token: String!, $password: String!) {
   resetPassword(data: {token: $token, password: $password}) {
@@ -645,6 +855,58 @@ export const VoteDocument = gql`
 export function useVoteMutation() {
   return Urql.useMutation<VoteMutation, VoteMutationVariables>(VoteDocument);
 };
+export const GroupDocument = gql`
+    query Group($slug: String!) {
+  group(slug: $slug) {
+    id
+    name
+    description
+    requirements
+    slug
+    is_private
+    isMember
+    isLeader
+    invite
+    module {
+      id
+      name
+      code
+    }
+    requests {
+      ...UserDetails
+    }
+    members {
+      ...UserDetails
+    }
+  }
+}
+    ${UserDetailsFragmentDoc}`;
+
+export function useGroupQuery(options: Omit<Urql.UseQueryArgs<GroupQueryVariables>, 'query'> = {}) {
+  return Urql.useQuery<GroupQuery>({ query: GroupDocument, ...options });
+};
+export const GroupsDocument = gql`
+    query Groups($moduleId: Int!) {
+  groups(moduleId: $moduleId) {
+    id
+    name
+    description
+    requirements
+    slug
+    isMember
+    isLeader
+    module {
+      id
+      name
+      code
+    }
+  }
+}
+    `;
+
+export function useGroupsQuery(options: Omit<Urql.UseQueryArgs<GroupsQueryVariables>, 'query'> = {}) {
+  return Urql.useQuery<GroupsQuery>({ query: GroupsDocument, ...options });
+};
 export const MeDocument = gql`
     query Me {
   me {
@@ -655,6 +917,19 @@ export const MeDocument = gql`
 
 export function useMeQuery(options: Omit<Urql.UseQueryArgs<MeQueryVariables>, 'query'> = {}) {
   return Urql.useQuery<MeQuery>({ query: MeDocument, ...options });
+};
+export const ModulesDocument = gql`
+    query Modules {
+  modules {
+    id
+    code
+    name
+  }
+}
+    `;
+
+export function useModulesQuery(options: Omit<Urql.UseQueryArgs<ModulesQueryVariables>, 'query'> = {}) {
+  return Urql.useQuery<ModulesQuery>({ query: ModulesDocument, ...options });
 };
 export const PostDocument = gql`
     query Post($id: Int!) {
