@@ -1,0 +1,15 @@
+mutation CreateGroup($details: GroupCreationInput!) {
+  createGroup(input: $details) {
+    errors {
+      ...ErrorDetails
+    }
+    group {
+      id
+      name
+      description
+      requirements
+      module_id
+      is_private
+    }
+  }
+}
