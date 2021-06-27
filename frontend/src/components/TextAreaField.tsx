@@ -24,7 +24,6 @@ const TextAreaField: React.FC<FieldAttributes<TextAreaFieldProps>> = ({
         rowsMax={10}
         multiline
         fullWidth
-        required
         variant="outlined"
         autoComplete="off"
       />
