@@ -1,0 +1,16 @@
+query Groups($moduleId: Int!) {
+  groups(moduleId: $moduleId) {
+    id
+    name
+    description
+    requirements
+    slug
+    isMember
+    isLeader
+    module {
+      id
+      name
+      code
+    }
+  }
+}
