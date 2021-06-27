@@ -1,0 +1,4 @@
+fragment StatusResponse on Status {
+  message
+  success
+}
