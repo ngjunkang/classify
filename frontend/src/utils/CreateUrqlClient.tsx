@@ -37,16 +37,18 @@ function updateCacheQuery<Result, Query>(
   );
 }
 
-const errorExchange: Exchange = ({ forward }) => (ops$) => {
-  return pipe(
-    forward(ops$),
-    tap(({ error }) => {
-      if (error?.message.includes("not authenticated")) {
-        Router.replace("/login?next=" + Router.pathname);
-      }
-    })
-  );
-};
+const errorExchange: Exchange =
+  ({ forward }) =>
+  (ops$) => {
+    return pipe(
+      forward(ops$),
+      tap(({ error }) => {
+        if (error?.message.includes("not authenticated")) {
+          Router.replace("/login?next=" + Router.asPath);
+        }
+      })
+    );
+  };
 
 export const cursorPagination = (): Resolver => {
   return (_parent, fieldArgs, cache, info) => {
