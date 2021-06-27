@@ -1,0 +1,7 @@
+query Modules {
+  modules {
+    id
+    code
+    name
+  }
+}
