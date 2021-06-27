@@ -1,0 +1,24 @@
+query Group($slug: String!) {
+  group(slug: $slug) {
+    id
+    name
+    description
+    requirements
+    slug
+    is_private
+    isMember
+    isLeader
+    invite
+    module {
+      id
+      name
+      code
+    }
+    requests {
+      ...UserDetails
+    }
+    members {
+      ...UserDetails
+    }
+  }
+}
