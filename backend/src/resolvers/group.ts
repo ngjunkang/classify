@@ -13,6 +13,7 @@ import {
   Root,
   UseMiddleware,
 } from "type-graphql";
+import { getRepository } from "typeorm";
 import { Group } from "../entities/Group";
 import { GroupInvite } from "../entities/GroupInvite";
 import { GroupRequest } from "../entities/GroupRequest";
@@ -35,10 +36,28 @@ class GroupCreationInput {
   requirements: string;
 
   @Field()
-  moduleId: number;
+  module_id: number;
 
   @Field()
-  isPrivate: boolean;
+  is_private: boolean;
+}
+
+@InputType()
+class GroupEditInput {
+  @Field(() => Int)
+  id: number;
+
+  @Field()
+  description: string;
+
+  @Field()
+  requirements: string;
+
+  @Field()
+  module_id: number;
+
+  @Field()
+  is_private: boolean;
 }
 
 @InputType()
@@ -98,57 +117,37 @@ class Status {
   success: boolean;
 }
 
-@ObjectType()
-class GroupInfo {
-  // group
-  @Field(() => Int)
-  id: number;
-
-  // group
-  @Field(() => String)
-  name: string;
-
-  // group
-  @Field(() => String)
-  description: string;
-
-  // group
-  @Field(() => String)
-  requirements: string;
-
-  // group
-  @Field(() => String)
-  slug: string;
-
-  // group
-  @Field(() => Boolean)
-  isPrivate: boolean;
-
-  @Field(() => Boolean)
-  isMember: boolean;
-
-  // group
-  @Field(() => Module, { nullable: true })
-  module?: Module;
-
-  @Field(() => Boolean, { nullable: true })
-  isLeader?: boolean;
-
-  @Field(() => GroupInvite, { nullable: true })
-  invite?: GroupInvite;
-
-  @Field(() => [GroupRequest], { nullable: true })
-  requests?: GroupRequest[];
-
-  @Field(() => [User], { nullable: true })
-  members?: User[];
-}
-
 @Resolver(Group)
 export class GroupResolver {
   @FieldResolver(() => Module, { nullable: true })
-  module(@Root() group: Group): Promise<Module | undefined> {
-    return Module.findOne({ id: group.module_id });
+  module(
+    @Root() group: Group,
+    @Ctx() { moduleLoader }: ThisContext
+  ): Promise<Module | undefined> {
+    return moduleLoader.load(group.module_id ? group.module_id : 0);
+  }
+
+  @FieldResolver(() => Boolean)
+  async isLeader(
+    @Root() group: Group,
+    @Ctx() { req }: ThisContext
+  ): Promise<Boolean> {
+    return !!(await Membership.findOne({
+      user_id: req.session.userId,
+      group_id: group.id,
+      is_leader: true,
+    }));
+  }
+
+  @FieldResolver(() => Boolean)
+  async isMember(
+    @Root() group: Group,
+    @Ctx() { req }: ThisContext
+  ): Promise<Boolean> {
+    return !!(await Membership.findOne({
+      user_id: req.session.userId,
+      group_id: group.id,
+    }));
   }
 
   @FieldResolver(() => [User])
@@ -170,13 +169,13 @@ export class GroupResolver {
     return users;
   }
 
-  @FieldResolver(() => [GroupRequest])
+  @FieldResolver(() => [User])
   async requests(
     @Root() group: Group,
     @Ctx() { req }: ThisContext
-  ): Promise<GroupRequest[]> {
+  ): Promise<User[]> {
     // is Leader
-    let allRequests: GroupRequest[] = [];
+    let allRequestees: User[] = [];
     const leader = await Membership.findOne({
       user_id: req.session.userId,
       group_id: group.id,
@@ -184,22 +183,26 @@ export class GroupResolver {
     });
 
     if (!leader) {
-      return allRequests;
+      return allRequestees;
     }
 
-    return GroupRequest.find({ group_id: group.id });
+    const allRequestsId = (
+      await GroupRequest.find({ group_id: group.id, reply_status: 0 })
+    ).map((request) => request.user_id);
+
+    return User.findByIds(allRequestsId);
   }
 
-  @FieldResolver(() => GroupInvite, { nullable: true })
-  invite(
+  @FieldResolver(() => Boolean)
+  async invite(
     @Root() group: Group,
     @Ctx() { req }: ThisContext
-  ): Promise<GroupInvite | undefined> {
-    return GroupInvite.findOne({
+  ): Promise<Boolean> {
+    return !!(await GroupInvite.findOne({
       group_id: group.id,
       user_id: req.session.userId,
       reply_status: 0,
-    });
+    }));
   }
 
   @Mutation(() => Status)
@@ -368,6 +371,7 @@ export class GroupResolver {
     await GroupRequest.create({
       user_id: req.session.userId,
       group_id: groupId,
+      reply_status: 0,
     }).save();
 
     return { success: true, message: "Request sent!" };
@@ -428,9 +432,35 @@ export class GroupResolver {
     await GroupInvite.create({
       user_id: userId,
       group_id: groupId,
+      reply_status: 0,
     }).save();
 
     return { success: true, message: "User Invited" };
+  }
+
+  @Mutation(() => Status)
+  @UseMiddleware(isAuth)
+  async editGroup(
+    @Arg("input") input: GroupEditInput,
+    @Ctx() { req }: ThisContext
+  ): Promise<Status> {
+    const isLeader = !!(await Membership.findOne({
+      user_id: req.session.userId,
+      group_id: input.id,
+      is_leader: true,
+    }));
+
+    if (!isLeader) {
+      return { message: "You are not leader", success: false };
+    }
+
+    const { module_id, id, ...noModProps } = input;
+
+    const moduleId = module_id === 0 ? undefined : module_id;
+
+    await Group.update({ id: id }, { ...noModProps, module_id: moduleId });
+
+    return { success: true, message: "Information updated" };
   }
 
   @Mutation(() => GroupResponse)
@@ -455,9 +485,9 @@ export class GroupResolver {
       return { errors: [{ field: "name", message: nameErrorMessage }] };
     }
 
-    const { moduleId, ...noModProps } = input;
+    const { module_id, ...noModProps } = input;
 
-    const userInput = moduleId === 0 ? noModProps : input;
+    const userInput = module_id === 0 ? noModProps : input;
     const group = await Group.create({
       ...userInput,
       creator_id: req.session.userId,
@@ -483,79 +513,10 @@ export class GroupResolver {
     }
   }
 
-  @Query(() => GroupInfo, { nullable: true })
-  async group(
-    @Arg("slug") slug: string,
-    @Ctx() { req }: ThisContext
-  ): Promise<GroupInfo | undefined> {
+  @Query(() => Group, { nullable: true })
+  group(@Arg("slug") slug: string): Promise<Group | undefined> {
     // get group
-    const group = await Group.findOne({ slug: slug });
-
-    // no such group
-    if (!group) {
-      return undefined;
-    }
-
-    // get module
-    const module = await Module.findOne(group.module_id);
-
-    // is member
-    const allMembers: Membership[] = await Membership.find({
-      group_id: group.id,
-    });
-    const allMembersId = allMembers.map((member) => member.user_id);
-
-    if (!allMembersId.includes(req.session.userId)) {
-      // if user is not a member
-      // get invite
-      const invite = await GroupInvite.findOne({
-        group_id: group.id,
-        user_id: req.session.userId,
-        reply_status: 0,
-      });
-
-      return {
-        id: group.id,
-        name: group.name,
-        description: group.description,
-        requirements: group.requirements,
-        slug: group.slug,
-        isPrivate: group.is_private,
-        module: module,
-        invite: invite,
-        isMember: false,
-      };
-    }
-
-    const users: User[] = await User.findByIds(allMembersId);
-    let isLeader: boolean = false;
-    let requests = undefined;
-    if (
-      allMembers.filter(
-        (member) => member.is_leader && member.user_id === req.session.userId
-      ).length
-    ) {
-      // is leader
-      isLeader = true;
-      requests = await GroupRequest.find({
-        group_id: group.id,
-        reply_status: 0,
-      });
-    }
-
-    return {
-      id: group.id,
-      name: group.name,
-      description: group.description,
-      requirements: group.requirements,
-      slug: group.slug,
-      isPrivate: group.is_private,
-      module: module,
-      requests: requests,
-      isMember: true,
-      isLeader: isLeader,
-      members: users,
-    };
+    return Group.findOne({ slug: slug });
   }
 
   @Query(() => [Group])
@@ -564,7 +525,18 @@ export class GroupResolver {
   }
 
   @Query(() => [Group])
-  groups(): Promise<Group[]> {
-    return Group.find({ is_private: false });
+  groups(@Arg("moduleId", () => Int) moduleId: number): Promise<Group[]> {
+    const qb = getRepository(Group)
+      .createQueryBuilder("group")
+      .where("group.is_private = FALSE")
+      .orderBy("group.createdAt", "DESC");
+
+    if (!moduleId) {
+      return qb.getMany();
+    } else {
+      return qb
+        .andWhere("group.module_id = :moduleId", { moduleId: moduleId })
+        .getMany();
+    }
   }
 }
