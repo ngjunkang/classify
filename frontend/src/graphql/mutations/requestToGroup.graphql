@@ -1,0 +1,5 @@
+mutation RequestToGroup($groupId: Int!) {
+  requestToGroup(groupId: $groupId) {
+    ...StatusResponse
+  }
+}
