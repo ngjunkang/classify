@@ -10,6 +10,7 @@ mutation CreateGroup($details: GroupCreationInput!) {
       requirements
       module_id
       is_private
+      slug
     }
   }
 }
