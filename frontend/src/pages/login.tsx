@@ -53,6 +53,7 @@ const login: React.FC<loginProps> = ({}) => {
             <StandardTextField
               label="Email or Username"
               name="emailOrUsername"
+              wantAutocomplete
             />
             <PasswordInputField
               labelWidth={80}
