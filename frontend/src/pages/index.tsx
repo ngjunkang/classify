@@ -89,6 +89,15 @@ const Index = () => {
             </Button>
           </Box>
         )}
+        <Box mt={5}>
+          <Button
+            rel="noopener noreferrer"
+            href="https://forms.gle/aTP65LHmboyWeG1r7"
+            target="_blank"
+          >
+            Report bugs here
+          </Button>
+        </Box>
       </Box>
     </Layout>
   );

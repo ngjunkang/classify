@@ -46,6 +46,19 @@ const SideBar: React.FC<SideBarProps> = ({ open, toggleDrawer }) => {
               </ListItem>
             </NextLink>
           ))}
+          <Divider />
+          <ListItem button>
+            <ListItemText
+              primary="Report bugs"
+              onClick={() =>
+                window.open(
+                  "https://forms.gle/aTP65LHmboyWeG1r7",
+                  "_blank",
+                  "noopener noreferrer"
+                )
+              }
+            />
+          </ListItem>
         </List>
       </div>
     </Drawer>
