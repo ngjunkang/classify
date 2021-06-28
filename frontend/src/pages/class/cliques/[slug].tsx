@@ -1,5 +1,7 @@
 import {
+  Avatar,
   Backdrop,
+  Button,
   CircularProgress,
   Divider,
   Grid,
@@ -9,13 +11,11 @@ import {
   ListItemText,
   Theme,
   Typography,
-  Avatar,
-  Button,
 } from "@material-ui/core";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
 import { Add } from "@material-ui/icons";
 import { Alert } from "@material-ui/lab";
-import { Formik, Form } from "formik";
+import { Form, Formik } from "formik";
 import { withUrqlClient } from "next-urql";
 import ErrorPage from "next/error";
 import { useRouter } from "next/router";
@@ -39,7 +39,6 @@ import {
   useRequestToGroupMutation,
 } from "../../../generated/graphql";
 import CreateUrqlClient from "../../../utils/CreateUrqlClient";
-import { mapError } from "../../../utils/mapError";
 
 interface CliquePageProps {}
 
@@ -370,8 +369,16 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
       >
         {({ isSubmitting, setFieldValue }) => (
           <Form>
-            <TextAreaField label="Clique Description" name="description" />
-            <TextAreaField label="Clique Requirements" name="requirements" />
+            <TextAreaField
+              label="Clique Description"
+              name="description"
+              optional
+            />
+            <TextAreaField
+              label="Clique Requirements"
+              name="requirements"
+              optional
+            />
             <ModuleSelection
               handleOnChange={(e, value) =>
                 setFieldValue("module_id", !value ? 0 : value.id)

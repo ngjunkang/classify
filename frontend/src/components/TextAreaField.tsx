@@ -4,6 +4,7 @@ import React from "react";
 
 interface TextAreaFieldProps {
   label: string;
+  optional?: boolean;
 }
 
 const TextAreaField: React.FC<FieldAttributes<TextAreaFieldProps>> = ({
@@ -24,6 +25,7 @@ const TextAreaField: React.FC<FieldAttributes<TextAreaFieldProps>> = ({
         rowsMax={10}
         multiline
         fullWidth
+        required={props.optional ? false : true}
         variant="outlined"
         autoComplete="off"
       />

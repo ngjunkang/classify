@@ -35,7 +35,7 @@ const CreatePost: React.FC<{}> = ({}) => {
         {({ isSubmitting }) => (
           <Form>
             <StandardTextField label="Title" name="title" />
-            <TextAreaField label="Text" name="content" required />
+            <TextAreaField label="Text" name="content" />
             <LoadingButton isLoading={isSubmitting} type="submit">
               Create Post
             </LoadingButton>

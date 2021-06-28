@@ -53,8 +53,16 @@ const CreateNewClique: React.FC<CreateNewCliqueProps> = ({}) => {
         {({ isSubmitting, setFieldValue }) => (
           <Form>
             <StandardTextField label="Clique Name" name="name" />
-            <TextAreaField label="Clique Description" name="description" />
-            <TextAreaField label="Clique Requirements" name="requirements" />
+            <TextAreaField
+              label="Clique Description"
+              name="description"
+              optional
+            />
+            <TextAreaField
+              label="Clique Requirements"
+              name="requirements"
+              optional
+            />
             <ModuleSelection
               handleOnChange={(e, value) =>
                 setFieldValue("module_id", !value ? 0 : value.id)
