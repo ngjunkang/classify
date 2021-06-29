@@ -34,6 +34,7 @@ import {
   useEditGroupMutation,
   useGroupQuery,
   useInviteByUserNameMutation,
+  useMeQuery,
   useReplyInviteMutation,
   useReplyRequestMutation,
   useRequestToGroupMutation,
@@ -80,6 +81,7 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
       slug: typeof router.query?.slug === "string" ? router.query.slug : "",
     },
   });
+  const [{ data: me, fetching: meFetch }] = useMeQuery();
 
   const classes = useStyles();
   const [value, setValue] = useState(0);
@@ -144,7 +146,7 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
 
   // members
   let membersSection = null;
-  if (isMember) {
+  if (!meFetch && me.me && isMember) {
     membersSection = (
       <Grid xs={12} item>
         <Typography variant="h5">Members</Typography>
@@ -242,7 +244,7 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
   };
 
   let requestToGroupSection = null;
-  if (!isMember) {
+  if (!isMember || (!meFetch && !me.me)) {
     requestToGroupSection = (
       <Button
         variant="contained"
@@ -470,10 +472,16 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
             onChange={handleChange}
             aria-label="clique page"
           >
-            <StyledTab label="Info" {...a11yProps(0)} />
-            {isMember && <StyledTab label="Messages" {...a11yProps(1)} />}
-            {isMember && <StyledTab label="Schedule" {...a11yProps(2)} />}
-            {isLeader && <StyledTab label="Settings" {...a11yProps(3)} />}
+            <StyledTab key={0} label="Info" {...a11yProps(0)} />
+            {!meFetch && me.me && isMember && (
+              <StyledTab key={1} label="Messages" {...a11yProps(1)} />
+            )}
+            {!meFetch && me.me && isMember && (
+              <StyledTab key={2} label="Schedule" {...a11yProps(2)} />
+            )}
+            {!meFetch && me.me && isLeader && (
+              <StyledTab key={3} label="Settings" {...a11yProps(3)} />
+            )}
           </StyledTabs>
         </Grid>
         {infoTab}

@@ -16,7 +16,11 @@ import { Skeleton } from "@material-ui/lab";
 import { withUrqlClient } from "next-urql";
 import NextLink from "next/link";
 import React, { useEffect, useRef, useState } from "react";
-import { Group, useRequestToGroupMutation } from "../generated/graphql";
+import {
+  Group,
+  useMeQuery,
+  useRequestToGroupMutation,
+} from "../generated/graphql";
 import CreateUrqlClient from "../utils/CreateUrqlClient";
 import AlertSnackBar from "./misc/AlertSnackBar";
 
@@ -71,6 +75,8 @@ const GroupListItem: React.FC<Partial<Group> & GroupListItemProps> = ({
   isMember,
   isLoading,
 }) => {
+  const [{ data, fetching }] = useMeQuery();
+
   const [isExpanded, setIsExpanded] = useState(false);
   const classes = useStyles({ height: isExpanded });
 
@@ -123,7 +129,7 @@ const GroupListItem: React.FC<Partial<Group> & GroupListItemProps> = ({
   }
 
   let buttonSection = null;
-  if (isLeader) {
+  if (!fetching && data.me && isLeader) {
     buttonSection = (
       <NextLink href="/class/cliques/[slug]" as={`/class/cliques/${slug}`}>
         <Tooltip title="Edit">
@@ -164,7 +170,9 @@ const GroupListItem: React.FC<Partial<Group> & GroupListItemProps> = ({
           >
             <Grid container direction="column" spacing={2}>
               <Grid container item xs={12}>
-                <Grid item>{groupName}</Grid>
+                <Grid item {...(isLoading ? { xs: 12 } : null)}>
+                  {groupName}
+                </Grid>
                 {!isLoading && <Grid item>{buttonSection}</Grid>}
               </Grid>
               {module && (
