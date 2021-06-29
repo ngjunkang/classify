@@ -207,6 +207,28 @@ export class GroupResolver {
 
   @Mutation(() => Status)
   @UseMiddleware(isAuth)
+  async disbandGroup(
+    @Arg("groupId", () => Int) groupId: number,
+    @Ctx() { req }: ThisContext
+  ): Promise<Status> {
+    // check if leader
+    const leader = await Membership.findOne({
+      user_id: req.session.userId,
+      group_id: groupId,
+      is_leader: true,
+    });
+
+    if (!leader) {
+      return { success: false, message: "You are not the leader!" };
+    }
+
+    // if member is a leader
+    await Group.delete(groupId);
+    return { success: true, message: "Disband successful" };
+  }
+
+  @Mutation(() => Status)
+  @UseMiddleware(isAuth)
   async leaveGroup(
     @Arg("groupId", () => Int) groupId: number,
     @Ctx() { req }: ThisContext
@@ -229,9 +251,9 @@ export class GroupResolver {
       });
       if (!nextInLine) {
         // if no successor
-        Group.delete(groupId);
+        await Group.delete(groupId);
       } else {
-        Membership.update(
+        await Membership.update(
           { user_id: nextInLine.user_id, group_id: groupId },
           { is_leader: true }
         );
