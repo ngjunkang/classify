@@ -2,6 +2,7 @@ import {
   Avatar,
   Backdrop,
   Button,
+  Chip,
   CircularProgress,
   Divider,
   Grid,
@@ -19,11 +20,12 @@ import { Form, Formik } from "formik";
 import { withUrqlClient } from "next-urql";
 import ErrorPage from "next/error";
 import { useRouter } from "next/router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import CheckBoxField from "../../../components/CheckBoxField";
 import Layout from "../../../components/Layout";
 import LoadingButton from "../../../components/LoadingButton";
 import AlertSnackBar from "../../../components/misc/AlertSnackBar";
+import ConfirmationDialog from "../../../components/misc/ConfirmationDialog";
 import ModuleSelection from "../../../components/ModuleSelection";
 import StandardTextField from "../../../components/StandardTextField";
 import StyledTab from "../../../components/tab/StyledTab";
@@ -38,6 +40,7 @@ import {
   useReplyInviteMutation,
   useReplyRequestMutation,
   useRequestToGroupMutation,
+  useLeaveGroupMutation,
 } from "../../../generated/graphql";
 import CreateUrqlClient from "../../../utils/CreateUrqlClient";
 
@@ -61,6 +64,10 @@ const useStyles = makeStyles((theme: Theme) =>
     requestButton: {
       margin: theme.spacing(2, 0, 2, 2),
       marginLeft: "auto",
+    },
+    leaveGroup: {
+      backgroundColor: "#b51300",
+      color: "#fff",
     },
   })
 );
@@ -90,8 +97,16 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
   const [, requestToGroup] = useRequestToGroupMutation();
   const [, editGroup] = useEditGroupMutation();
   const [, inviteByUsername] = useInviteByUserNameMutation();
+  const [, leaveGroup] = useLeaveGroupMutation();
   const [status, setStatus] = useState({ success: false, message: "" });
   const [open, setOpen] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
+
+  useEffect(() => {
+    if (!meFetch && !me.me) {
+      setValue(0);
+    }
+  }, [me]);
 
   // functions
   const handleChange = (event: React.ChangeEvent<{}>, newValue: number) => {
@@ -148,32 +163,61 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
   let membersSection = null;
   if (!meFetch && me.me && isMember) {
     membersSection = (
-      <Grid xs={12} item>
-        <Typography variant="h5">Members</Typography>
-        <Divider />
-        <Grid container justify="flex-start">
-          {members.map((member) => {
-            return (
-              <Grid item xs={6} key={member.id}>
-                <List>
-                  <ListItem>
-                    <ListItemAvatar>
-                      <Avatar>{getInitials(member.displayName)}</Avatar>
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={
-                        <Typography variant="h6">
-                          {member.displayName}
-                        </Typography>
-                      }
-                    ></ListItemText>
-                  </ListItem>
-                </List>
-              </Grid>
-            );
-          })}
+      <>
+        <Grid xs={12} item>
+          <Typography variant="h5">Members</Typography>
+          <Divider />
+          <Grid container justify="flex-start">
+            {members.map((member) => {
+              return (
+                <Grid item xs={6} key={member.id}>
+                  <List>
+                    <ListItem>
+                      <ListItemAvatar>
+                        <Avatar>{getInitials(member.displayName)}</Avatar>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={
+                          <Typography variant="h6">
+                            {member.displayName}
+                          </Typography>
+                        }
+                      ></ListItemText>
+                    </ListItem>
+                  </List>
+                </Grid>
+              );
+            })}
+          </Grid>
         </Grid>
-      </Grid>
+        <Grid xs={12} item>
+          <Button
+            className={classes.leaveGroup}
+            onClick={() => setOpenDialog(true)}
+          >
+            Leave Clique
+          </Button>
+          <ConfirmationDialog
+            handleProceed={async () => {
+              setOpenDialog(false);
+              const { data, error } = await leaveGroup({ groupId: id });
+              if (!error) {
+                setStatus({
+                  message: data.leaveGroup.message,
+                  success: data.leaveGroup.success,
+                });
+                setOpen(true);
+              }
+            }}
+            handleClose={() => setOpenDialog(false)}
+            open={openDialog}
+            dialogTitle={`Leave ${name}?`}
+            diaglogContent="Are you sure you wanna leave?"
+            dialogCancelBtnTitle="Cancel"
+            dialogProceedBtnTitle="Leave"
+          />
+        </Grid>
+      </>
     );
   }
 
@@ -323,6 +367,15 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
             {requirements ? requirements : "NIL"}
           </Typography>
         </Grid>
+        {module && (
+          <Grid item xs={12}>
+            <Typography variant="h5">Module</Typography>
+            <Divider />
+            <Typography className={classes.preline}>
+              {`${module.name} (${module.code})`}
+            </Typography>
+          </Grid>
+        )}
         {membersSection}
       </Grid>
     </TabPanel>
@@ -466,7 +519,7 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
           </Typography>
           {requestToGroupSection}
         </Grid>
-        <Grid>
+        <Grid item xs={12}>
           <StyledTabs
             value={value}
             onChange={handleChange}

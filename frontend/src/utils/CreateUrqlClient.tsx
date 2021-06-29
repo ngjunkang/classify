@@ -14,8 +14,10 @@ import {
 import { pipe, tap } from "wonka";
 import {
   DeletePostMutationVariables,
+  EditGroupMutationVariables,
   GroupDocument,
   GroupQuery,
+  LeaveGroupMutationVariables,
   LoginMutation,
   LogoutMutation,
   MeDocument,
@@ -125,6 +127,64 @@ const CreateUrqlClient = (ssrExchange: any, ctx: any) => {
         },
         updates: {
           Mutation: {
+            leaveGroup: (result, args, cache, info) => {
+              cache.invalidate({
+                __typename: "Group",
+                id: (args as LeaveGroupMutationVariables).groupId,
+              });
+            },
+            editGroup: (result, args, cache, info) => {
+              const group = cache.readFragment(
+                gql`
+                  fragment __ on Group {
+                    id
+                    description
+                    requirements
+                    module {
+                      id
+                      name
+                      code
+                    }
+                  }
+                `,
+                {
+                  id: (args as EditGroupMutationVariables).input.id,
+                } as any
+              );
+
+              if (group) {
+                const cacheMod = group.module ? group.module.id : 0;
+                if (
+                  cacheMod !==
+                  (args as EditGroupMutationVariables).input.module_id
+                ) {
+                  cache.invalidate({
+                    __typename: "Group",
+                    id: (args as EditGroupMutationVariables).input.id,
+                  });
+                } else {
+                  cache.writeFragment(
+                    gql`
+                      fragment _ on Group {
+                        id
+                        description
+                        requirements
+                        is_private
+                      }
+                    `,
+                    {
+                      id: (args as EditGroupMutationVariables).input.id,
+                      description: (args as EditGroupMutationVariables).input
+                        .description,
+                      requirements: (args as EditGroupMutationVariables).input
+                        .requirements,
+                      is_private: (args as EditGroupMutationVariables).input
+                        .is_private,
+                    } as any
+                  );
+                }
+              }
+            },
             createGroup: (result, args, cache, info) => {
               const allFields = cache.inspectFields("Query");
               const fieldInfos = allFields.filter(
