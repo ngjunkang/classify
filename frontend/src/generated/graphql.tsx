@@ -393,6 +393,19 @@ export type InviteByUserNameMutation = (
   ) }
 );
 
+export type LeaveGroupMutationVariables = Exact<{
+  groupId: Scalars['Int'];
+}>;
+
+
+export type LeaveGroupMutation = (
+  { __typename?: 'Mutation' }
+  & { leaveGroup: (
+    { __typename?: 'Status' }
+    & StatusResponseFragment
+  ) }
+);
+
 export type LoginMutationVariables = Exact<{
   emailOrUsername: Scalars['String'];
   password: Scalars['String'];
@@ -737,6 +750,17 @@ export const InviteByUserNameDocument = gql`
 
 export function useInviteByUserNameMutation() {
   return Urql.useMutation<InviteByUserNameMutation, InviteByUserNameMutationVariables>(InviteByUserNameDocument);
+};
+export const LeaveGroupDocument = gql`
+    mutation LeaveGroup($groupId: Int!) {
+  leaveGroup(groupId: $groupId) {
+    ...StatusResponse
+  }
+}
+    ${StatusResponseFragmentDoc}`;
+
+export function useLeaveGroupMutation() {
+  return Urql.useMutation<LeaveGroupMutation, LeaveGroupMutationVariables>(LeaveGroupDocument);
 };
 export const LoginDocument = gql`
     mutation Login($emailOrUsername: String!, $password: String!) {

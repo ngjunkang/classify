@@ -1,0 +1,5 @@
+mutation LeaveGroup($groupId: Int!) {
+  leaveGroup(groupId: $groupId) {
+    ...StatusResponse
+  }
+}
