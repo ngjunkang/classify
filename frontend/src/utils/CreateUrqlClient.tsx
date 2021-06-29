@@ -14,12 +14,21 @@ import {
 import { pipe, tap } from "wonka";
 import {
   DeletePostMutationVariables,
+  GroupDocument,
+  GroupQuery,
   LoginMutation,
   LogoutMutation,
   MeDocument,
   MeQuery,
   RegisterMutation,
+  ReplyInviteMutation,
+  ReplyInviteMutationVariables,
+  ReplyRequestMutation,
+  ReplyRequestMutationVariables,
   ResetPasswordMutation,
+  useGroupQuery,
+  User,
+  UserDetailsFragment,
   VoteMutationVariables,
 } from "../generated/graphql";
 import gql from "graphql-tag";
@@ -116,6 +125,125 @@ const CreateUrqlClient = (ssrExchange: any, ctx: any) => {
         },
         updates: {
           Mutation: {
+            createGroup: (result, args, cache, info) => {
+              const allFields = cache.inspectFields("Query");
+              const fieldInfos = allFields.filter(
+                (info) => info.fieldName === "groups"
+              );
+              console.log(fieldInfos);
+              fieldInfos.forEach((fi) => {
+                cache.invalidate("Query", "groups", fi.arguments || {});
+              });
+            },
+            replyInvite: (result, args, cache, info) => {
+              if (
+                (result as ReplyInviteMutation).replyInvite.success &&
+                (result as ReplyInviteMutation).replyInvite.message ===
+                  "You joined the group!"
+              ) {
+                cache.invalidate({
+                  __typename: "Group",
+                  id: (args as ReplyInviteMutationVariables).input.groupId,
+                });
+              } else {
+                cache.writeFragment(
+                  gql`
+                    fragment _ on Group {
+                      id
+                      invite
+                    }
+                  `,
+                  {
+                    id: (args as ReplyInviteMutationVariables).input.groupId,
+                    invite: false,
+                  } as any
+                );
+              }
+            },
+            replyRequest: (result, args, cache, info) => {
+              const group = cache.readFragment(
+                gql`
+                  fragment readGroup on Group {
+                    id
+                    requests {
+                      id
+                      username
+                      displayName
+                    }
+                    members {
+                      id
+                      username
+                      displayName
+                    }
+                  }
+                `,
+                {
+                  id: (args as ReplyRequestMutationVariables).input.groupId,
+                } as any
+              );
+
+              if (group) {
+                if (group.requests) {
+                  const requests: UserDetailsFragment[] = group.requests.filter(
+                    (req: UserDetailsFragment) =>
+                      req.id !==
+                      (args as ReplyRequestMutationVariables).input.userId
+                  );
+
+                  cache.writeFragment(
+                    gql`
+                      fragment writeRequest on Group {
+                        id
+                        requests {
+                          id
+                          username
+                          displayName
+                        }
+                      }
+                    `,
+                    {
+                      id: (args as ReplyInviteMutationVariables).input.groupId,
+                      requests: requests,
+                    } as any
+                  );
+
+                  if (
+                    (result as ReplyRequestMutation).replyRequest.success &&
+                    (result as ReplyRequestMutation).replyRequest.message ===
+                      "User accepted!"
+                  ) {
+                    if (group.members) {
+                      const members: UserDetailsFragment[] = group.members;
+                      const user: UserDetailsFragment = group.requests.find(
+                        (req: UserDetailsFragment) =>
+                          req.id ===
+                          (args as ReplyRequestMutationVariables).input.userId
+                      );
+
+                      members.push(user);
+
+                      cache.writeFragment(
+                        gql`
+                          fragment writeMembers on Group {
+                            id
+                            members {
+                              id
+                              username
+                              displayName
+                            }
+                          }
+                        `,
+                        {
+                          id: (args as ReplyInviteMutationVariables).input
+                            .groupId,
+                          members: members,
+                        } as any
+                      );
+                    }
+                  }
+                }
+              }
+            },
             deletePost: (_result, args, cache, info) => {
               cache.invalidate({
                 __typename: "Post",
