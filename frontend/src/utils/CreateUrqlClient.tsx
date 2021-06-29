@@ -14,6 +14,7 @@ import {
 import { pipe, tap } from "wonka";
 import {
   DeletePostMutationVariables,
+  DisbandGroupMutationVariables,
   EditGroupMutationVariables,
   GroupDocument,
   GroupQuery,
@@ -127,6 +128,12 @@ const CreateUrqlClient = (ssrExchange: any, ctx: any) => {
         },
         updates: {
           Mutation: {
+            disbandGroup: (result, args, cache, info) => {
+              cache.invalidate({
+                __typename: "Group",
+                id: (args as DisbandGroupMutationVariables).groupId,
+              });
+            },
             leaveGroup: (result, args, cache, info) => {
               cache.invalidate({
                 __typename: "Group",
@@ -190,7 +197,6 @@ const CreateUrqlClient = (ssrExchange: any, ctx: any) => {
               const fieldInfos = allFields.filter(
                 (info) => info.fieldName === "groups"
               );
-              console.log(fieldInfos);
               fieldInfos.forEach((fi) => {
                 cache.invalidate("Query", "groups", fi.arguments || {});
               });
