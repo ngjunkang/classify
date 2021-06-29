@@ -2,7 +2,6 @@ import {
   Avatar,
   Backdrop,
   Button,
-  Chip,
   CircularProgress,
   Divider,
   Grid,
@@ -18,7 +17,6 @@ import { Add } from "@material-ui/icons";
 import { Alert } from "@material-ui/lab";
 import { Form, Formik } from "formik";
 import { withUrqlClient } from "next-urql";
-import ErrorPage from "next/error";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import CheckBoxField from "../../../components/CheckBoxField";
@@ -33,14 +31,15 @@ import StyledTabs from "../../../components/tab/StyledTabs";
 import TabPanel from "../../../components/tab/TabPanel";
 import TextAreaField from "../../../components/TextAreaField";
 import {
+  useDisbandGroupMutation,
   useEditGroupMutation,
   useGroupQuery,
   useInviteByUserNameMutation,
+  useLeaveGroupMutation,
   useMeQuery,
   useReplyInviteMutation,
   useReplyRequestMutation,
   useRequestToGroupMutation,
-  useLeaveGroupMutation,
 } from "../../../generated/graphql";
 import CreateUrqlClient from "../../../utils/CreateUrqlClient";
 
@@ -98,6 +97,7 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
   const [, editGroup] = useEditGroupMutation();
   const [, inviteByUsername] = useInviteByUserNameMutation();
   const [, leaveGroup] = useLeaveGroupMutation();
+  const [, disbandGroup] = useDisbandGroupMutation();
   const [status, setStatus] = useState({ success: false, message: "" });
   const [open, setOpen] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
@@ -127,7 +127,8 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
       </Backdrop>
     );
   } else if (!fetching && (!data || (data && !data.group))) {
-    return <ErrorPage statusCode={404} />;
+    router.push("/class/cliques");
+    return null;
   }
 
   // group exists
@@ -492,6 +493,18 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
   }
 
   // settings
+  const handleDisbandGroup = async () => {
+    setOpenDialog(false);
+    const { data, error } = await disbandGroup({ groupId: id });
+    if (!error) {
+      setStatus({
+        message: data.disbandGroup.message,
+        success: data.disbandGroup.success,
+      });
+      setOpen(true);
+    }
+  };
+
   let settingsTab = null;
   settingsTab = (
     <TabPanel value={value} index={3}>
@@ -505,6 +518,23 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
           <Typography variant="h5">Invite mates</Typography>
           <Divider />
           {inviteByUsernameSection}
+        </Grid>
+        <Grid item xs={12}>
+          <Button
+            className={classes.leaveGroup}
+            onClick={() => setOpenDialog(true)}
+          >
+            Disband Clique
+          </Button>
+          <ConfirmationDialog
+            handleProceed={handleDisbandGroup}
+            handleClose={() => setOpenDialog(false)}
+            open={openDialog}
+            dialogTitle={`Disband ${name}?`}
+            diaglogContent="Are you sure you wanna disband this clique?"
+            dialogCancelBtnTitle="Cancel"
+            dialogProceedBtnTitle="Disband"
+          />
         </Grid>
       </Grid>
     </TabPanel>
