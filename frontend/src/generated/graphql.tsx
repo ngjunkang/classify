@@ -100,6 +100,7 @@ export type Mutation = {
   createPost: Post;
   updatePost?: Maybe<Post>;
   deletePost: Scalars['Boolean'];
+  disbandGroup: Status;
   leaveGroup: Status;
   replyRequest: Status;
   replyInvite: Status;
@@ -151,6 +152,11 @@ export type MutationUpdatePostArgs = {
 
 export type MutationDeletePostArgs = {
   id: Scalars['Int'];
+};
+
+
+export type MutationDisbandGroupArgs = {
+  groupId: Scalars['Int'];
 };
 
 
@@ -355,6 +361,19 @@ export type DeletePostMutationVariables = Exact<{
 export type DeletePostMutation = (
   { __typename?: 'Mutation' }
   & Pick<Mutation, 'deletePost'>
+);
+
+export type DisbandGroupMutationVariables = Exact<{
+  groupId: Scalars['Int'];
+}>;
+
+
+export type DisbandGroupMutation = (
+  { __typename?: 'Mutation' }
+  & { disbandGroup: (
+    { __typename?: 'Status' }
+    & StatusResponseFragment
+  ) }
 );
 
 export type EditGroupMutationVariables = Exact<{
@@ -719,6 +738,17 @@ export const DeletePostDocument = gql`
 
 export function useDeletePostMutation() {
   return Urql.useMutation<DeletePostMutation, DeletePostMutationVariables>(DeletePostDocument);
+};
+export const DisbandGroupDocument = gql`
+    mutation DisbandGroup($groupId: Int!) {
+  disbandGroup(groupId: $groupId) {
+    ...StatusResponse
+  }
+}
+    ${StatusResponseFragmentDoc}`;
+
+export function useDisbandGroupMutation() {
+  return Urql.useMutation<DisbandGroupMutation, DisbandGroupMutationVariables>(DisbandGroupDocument);
 };
 export const EditGroupDocument = gql`
     mutation EditGroup($input: GroupEditInput!) {

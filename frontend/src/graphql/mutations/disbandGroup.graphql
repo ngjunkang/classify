@@ -1,0 +1,5 @@
+mutation DisbandGroup($groupId: Int!) {
+  disbandGroup(groupId: $groupId) {
+    ...StatusResponse
+  }
+}
