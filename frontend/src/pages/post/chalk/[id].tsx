@@ -1,6 +1,6 @@
-import { Box, Typography } from "@material-ui/core";
+import { Box, Button, Theme, Typography } from "@material-ui/core";
 import { Formik, Form } from "formik";
-import router from "material-ui/svg-icons/hardware/router";
+import { makeStyles, createStyles } from "@material-ui/core/styles";
 import { withUrqlClient } from "next-urql";
 import { useRouter } from "next/router";
 import React from "react";
@@ -12,8 +12,25 @@ import { useUpdatePostMutation } from "../../../generated/graphql";
 import CreateUrqlClient from "../../../utils/CreateUrqlClient";
 import { postFromUrl } from "../../../utils/postFromUrl";
 
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    flexBoxRow: {
+      margin: 2,
+      display: "flex",
+      flexDirection: "row",
+      alignItems: "left",
+    },
+    flexButton: {
+      marginTop: 15,
+      color: "grey",
+    },
+  })
+);
+
 const EditPost = ({}) => {
   const router = useRouter();
+
+  const styles = useStyles();
   const intId =
     typeof router.query.id === "string" ? parseInt(router.query.id) : -1;
   const [{ data, fetching }] = postFromUrl();
@@ -51,9 +68,24 @@ const EditPost = ({}) => {
           <Form>
             <StandardTextField label="Title" name="title" />
             <TextAreaField label="Text" name="content" />
-            <LoadingButton isLoading={isSubmitting} type="submit">
-              Update Post
-            </LoadingButton>
+            <Box className={styles.flexBoxRow}>
+              <Button
+                className={styles.flexButton}
+                onClick={() => {
+                  if (sessionStorage.getItem("prevPath")) {
+                    const prev = sessionStorage.getItem("prevPath");
+                    router.push(prev);
+                  } else {
+                    router.push("/whiteboard");
+                  }
+                }}
+              >
+                Cancel
+              </Button>
+              <LoadingButton isLoading={isSubmitting} type="submit">
+                Update Post
+              </LoadingButton>
+            </Box>
           </Form>
         )}
       </Formik>

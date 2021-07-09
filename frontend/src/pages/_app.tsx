@@ -4,9 +4,24 @@ import { AppProps } from "next/app";
 import Head from "next/head";
 import React from "react";
 import theme from "../styles/theme";
+import { useRouter } from "next/router";
+import { useEffect } from "react";
 
 export default function MyApp(props: AppProps) {
   const { Component, pageProps } = props;
+  const router = useRouter();
+
+  // store previous path for cancel button
+  useEffect(() => storePathValues, [router.asPath]);
+  function storePathValues() {
+    const storage = globalThis?.sessionStorage;
+    if (!storage) return;
+    // Set the previous path as the value of the current path.
+    const prevPath = storage.getItem("currentPath");
+    storage.setItem("prevPath", prevPath);
+    // Set the current path value by looking at the browser's location object.
+    storage.setItem("currentPath", globalThis.location.pathname);
+  }
 
   React.useEffect(() => {
     // Remove the server-side injected CSS.
