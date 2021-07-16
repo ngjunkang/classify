@@ -8,6 +8,7 @@ import {
   BaseEntity,
   OneToMany,
 } from "typeorm";
+import { Comment } from "./Comment";
 import { Group } from "./Group";
 import { GroupInvite } from "./GroupInvite";
 import { GroupMessage } from "./GroupMessage";
@@ -28,6 +29,9 @@ export class User extends BaseEntity {
 
   @OneToMany(() => Post, (post) => post.creator)
   posts: Post[];
+
+  @OneToMany(() => Comment, (comment) => comment.creator)
+  comments: Comment[];
 
   @OneToMany(() => Upvote, (upvote) => upvote.user)
   upvotes: Upvote[];
