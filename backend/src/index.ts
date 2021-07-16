@@ -17,6 +17,7 @@ import helmet from "helmet";
 import { GroupResolver } from "./resolvers/group";
 import { MiscResolver } from "./resolvers/misc";
 import createModuleLoader from "./utils/createModuleLoader";
+import { CommentResolver } from "./resolvers/comment";
 
 const main = async () => {
   await createConnection(typeOrmConfig);
@@ -64,6 +65,7 @@ const main = async () => {
         PostResolver,
         GroupResolver,
         MiscResolver,
+        CommentResolver,
       ],
       validate: false,
     }),

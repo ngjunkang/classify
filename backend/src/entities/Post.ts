@@ -9,6 +9,7 @@ import {
   ManyToOne,
   OneToMany,
 } from "typeorm";
+import { Comment } from "./Comment";
 import { Upvote } from "./Upvote";
 import { User } from "./User";
 
@@ -18,7 +19,7 @@ export class Post extends BaseEntity {
   // extending BaseEntity allows User.create..
 
   @Field()
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ type: "int" })
   id!: number;
 
   @Field()
@@ -31,6 +32,9 @@ export class Post extends BaseEntity {
 
   @OneToMany(() => Upvote, (upvote) => upvote.post)
   upvotes: Upvote[];
+
+  @OneToMany(() => Comment, (comment) => comment.post)
+  comments: Comment[];
 
   @Field()
   @Column({ type: "int", default: 0 })
