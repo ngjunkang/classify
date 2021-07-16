@@ -13,9 +13,12 @@ import {
 } from "urql";
 import { pipe, tap } from "wonka";
 import {
+  CreateCommentMutationVariables,
+  DeleteCommentMutationVariables,
   DeletePostMutationVariables,
   DisbandGroupMutationVariables,
   EditGroupMutationVariables,
+  EditModeMutationVariables,
   GroupDocument,
   GroupQuery,
   LeaveGroupMutationVariables,
@@ -32,6 +35,8 @@ import {
   useGroupQuery,
   User,
   UserDetailsFragment,
+  VoteCommentDocument,
+  VoteCommentMutationVariables,
   VoteMutationVariables,
 } from "../generated/graphql";
 import gql from "graphql-tag";
@@ -49,18 +54,16 @@ function updateCacheQuery<Result, Query>(
   );
 }
 
-const errorExchange: Exchange =
-  ({ forward }) =>
-  (ops$) => {
-    return pipe(
-      forward(ops$),
-      tap(({ error }) => {
-        if (error?.message.includes("not authenticated")) {
-          Router.replace("/login?next=" + Router.asPath);
-        }
-      })
-    );
-  };
+const errorExchange: Exchange = ({ forward }) => (ops$) => {
+  return pipe(
+    forward(ops$),
+    tap(({ error }) => {
+      if (error?.message.includes("not authenticated")) {
+        Router.replace("/login?next=" + Router.asPath);
+      }
+    })
+  );
+};
 
 export const cursorPagination = (): Resolver => {
   return (_parent, fieldArgs, cache, info) => {
@@ -330,19 +333,30 @@ const CreateUrqlClient = (ssrExchange: any, ctx: any) => {
               );
               if (data) {
                 if (data.voteStatus === value) {
-                  return;
+                  const newPoints = (data.points as number) + -1 * value;
+                  cache.writeFragment(
+                    gql`
+                      fragment __ on Post {
+                        points
+                        voteStatus
+                      }
+                    `,
+                    { id: postId, points: newPoints, voteStatus: null } as any
+                  );
+                } else {
+                  const newPoints =
+                    (data.points as number) +
+                    (!data.voteStatus ? 1 : 2) * value;
+                  cache.writeFragment(
+                    gql`
+                      fragment __ on Post {
+                        points
+                        voteStatus
+                      }
+                    `,
+                    { id: postId, points: newPoints, voteStatus: value } as any
+                  );
                 }
-                const newPoints =
-                  (data.points as number) + (!data.voteStatus ? 1 : 2) * value;
-                cache.writeFragment(
-                  gql`
-                    fragment __ on Post {
-                      points
-                      voteStatus
-                    }
-                  `,
-                  { id: postId, points: newPoints, voteStatus: value } as any
-                );
               }
             },
             createPost: (_result, args, cache, info) => {
@@ -352,6 +366,34 @@ const CreateUrqlClient = (ssrExchange: any, ctx: any) => {
               );
               fieldInfos.forEach((fi) => {
                 cache.invalidate("Query", "posts", fi.arguments || {});
+              });
+            },
+            createComment: (_result, args, cache, info) => {
+              const { input } = args as CreateCommentMutationVariables;
+              cache.invalidate({
+                __typename: "Post",
+                id: input.postId,
+              });
+            },
+            editMode: (_result, args, cache, info) => {
+              const { postId } = args as EditModeMutationVariables;
+              cache.invalidate({
+                __typename: "Post",
+                id: postId,
+              });
+            },
+            deleteComment: (_result, args, cache, info) => {
+              const { postId } = args as VoteCommentMutationVariables;
+              cache.invalidate({
+                __typename: "Post",
+                id: postId,
+              });
+            },
+            voteComment: (_result, args, cache, info) => {
+              const { postId } = args as VoteCommentMutationVariables;
+              cache.invalidate({
+                __typename: "Post",
+                id: postId,
               });
             },
             resetPassword: (result, args, cache, info) => {

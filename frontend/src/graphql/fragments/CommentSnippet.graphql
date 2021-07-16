@@ -1,0 +1,7 @@
+fragment CommentSnippet on Comment {
+  commentId
+  postId
+  points
+  voteStatus
+  creatorId
+}

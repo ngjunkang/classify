@@ -1,0 +1,7 @@
+mutation UpdateComment($postId: Int!, $commentId: Int!, $content: String!) {
+  updateComment(postId: $postId, commentId: $commentId, content: $content) {
+    postId
+    commentId
+    content
+  }
+}

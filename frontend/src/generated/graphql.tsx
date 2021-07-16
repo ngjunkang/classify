@@ -14,6 +14,26 @@ export type Scalars = {
   Float: number;
 };
 
+export type Comment = {
+  __typename?: 'Comment';
+  commentId: Scalars['Float'];
+  content: Scalars['String'];
+  points: Scalars['Float'];
+  voteStatus?: Maybe<Scalars['Int']>;
+  editMode: Scalars['Boolean'];
+  creator: User;
+  creatorId: Scalars['Float'];
+  post: Post;
+  postId: Scalars['Float'];
+  createdAt: Scalars['String'];
+  updatedAt: Scalars['String'];
+};
+
+export type CreateCommentDetails = {
+  content: Scalars['String'];
+  postId: Scalars['Float'];
+};
+
 export type CreatePostDetails = {
   title: Scalars['String'];
   content: Scalars['String'];
@@ -100,6 +120,9 @@ export type Mutation = {
   createPost: Post;
   updatePost?: Maybe<Post>;
   deletePost: Scalars['Boolean'];
+  createComment: Comment;
+  deleteComment: Scalars['Int'];
+  updateComment?: Maybe<Comment>;
   disbandGroup: Status;
   leaveGroup: Status;
   replyRequest: Status;
@@ -109,6 +132,8 @@ export type Mutation = {
   inviteToGroupById: Status;
   editGroup: Status;
   createGroup: GroupResponse;
+  editMode?: Maybe<Comment>;
+  voteComment: Scalars['Boolean'];
 };
 
 
@@ -152,6 +177,24 @@ export type MutationUpdatePostArgs = {
 
 export type MutationDeletePostArgs = {
   id: Scalars['Int'];
+};
+
+
+export type MutationCreateCommentArgs = {
+  input: CreateCommentDetails;
+};
+
+
+export type MutationDeleteCommentArgs = {
+  commentId: Scalars['Int'];
+  postId: Scalars['Int'];
+};
+
+
+export type MutationUpdateCommentArgs = {
+  content: Scalars['String'];
+  commentId: Scalars['Int'];
+  postId: Scalars['Int'];
 };
 
 
@@ -199,6 +242,19 @@ export type MutationCreateGroupArgs = {
   input: GroupCreationInput;
 };
 
+
+export type MutationEditModeArgs = {
+  commentId: Scalars['Int'];
+  postId: Scalars['Int'];
+};
+
+
+export type MutationVoteCommentArgs = {
+  commentId: Scalars['Int'];
+  value: Scalars['Int'];
+  postId: Scalars['Int'];
+};
+
 export type PaginatedPosts = {
   __typename?: 'PaginatedPosts';
   posts: Array<Post>;
@@ -217,6 +273,12 @@ export type Post = {
   title: Scalars['String'];
   content: Scalars['String'];
   textSnippet: Scalars['String'];
+  comments: Array<Comment>;
+};
+
+
+export type PostCommentsArgs = {
+  postID: Scalars['Int'];
 };
 
 export type Query = {
@@ -229,6 +291,7 @@ export type Query = {
   myGroups: Array<Group>;
   groups: Array<Group>;
   modules: Array<Module>;
+  comment?: Maybe<Comment>;
 };
 
 
@@ -250,6 +313,11 @@ export type QueryGroupArgs = {
 
 export type QueryGroupsArgs = {
   moduleId: Scalars['Int'];
+};
+
+
+export type QueryCommentArgs = {
+  commentId: Scalars['Int'];
 };
 
 export type RegisterInput = {
@@ -297,6 +365,11 @@ export type UserResponse = {
   user?: Maybe<User>;
 };
 
+export type CommentSnippetFragment = (
+  { __typename?: 'Comment' }
+  & Pick<Comment, 'commentId' | 'postId' | 'points' | 'voteStatus' | 'creatorId'>
+);
+
 export type ErrorDetailsFragment = (
   { __typename?: 'FieldError' }
   & Pick<FieldError, 'field' | 'message'>
@@ -319,6 +392,19 @@ export type StatusResponseFragment = (
 export type UserDetailsFragment = (
   { __typename?: 'User' }
   & Pick<User, 'id' | 'username' | 'displayName'>
+);
+
+export type CreateCommentMutationVariables = Exact<{
+  input: CreateCommentDetails;
+}>;
+
+
+export type CreateCommentMutation = (
+  { __typename?: 'Mutation' }
+  & { createComment: (
+    { __typename?: 'Comment' }
+    & Pick<Comment, 'postId' | 'commentId' | 'creatorId' | 'content'>
+  ) }
 );
 
 export type CreateGroupMutationVariables = Exact<{
@@ -351,6 +437,17 @@ export type CreatePostMutation = (
     { __typename?: 'Post' }
     & Pick<Post, 'id' | 'createdAt' | 'updatedAt' | 'title' | 'content' | 'points' | 'creatorId'>
   ) }
+);
+
+export type DeleteCommentMutationVariables = Exact<{
+  postId: Scalars['Int'];
+  commentId: Scalars['Int'];
+}>;
+
+
+export type DeleteCommentMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'deleteComment'>
 );
 
 export type DeletePostMutationVariables = Exact<{
@@ -387,6 +484,20 @@ export type EditGroupMutation = (
     { __typename?: 'Status' }
     & StatusResponseFragment
   ) }
+);
+
+export type EditModeMutationVariables = Exact<{
+  postId: Scalars['Int'];
+  commentId: Scalars['Int'];
+}>;
+
+
+export type EditModeMutation = (
+  { __typename?: 'Mutation' }
+  & { editMode?: Maybe<(
+    { __typename?: 'Comment' }
+    & Pick<Comment, 'postId' | 'commentId' | 'editMode'>
+  )> }
 );
 
 export type ForgotPasswordMutationVariables = Exact<{
@@ -534,6 +645,21 @@ export type ResetPasswordMutation = (
   ) }
 );
 
+export type UpdateCommentMutationVariables = Exact<{
+  postId: Scalars['Int'];
+  commentId: Scalars['Int'];
+  content: Scalars['String'];
+}>;
+
+
+export type UpdateCommentMutation = (
+  { __typename?: 'Mutation' }
+  & { updateComment?: Maybe<(
+    { __typename?: 'Comment' }
+    & Pick<Comment, 'postId' | 'commentId' | 'content'>
+  )> }
+);
+
 export type UpdatePostMutationVariables = Exact<{
   id: Scalars['Int'];
   title: Scalars['String'];
@@ -558,6 +684,18 @@ export type VoteMutationVariables = Exact<{
 export type VoteMutation = (
   { __typename?: 'Mutation' }
   & Pick<Mutation, 'vote'>
+);
+
+export type VoteCommentMutationVariables = Exact<{
+  value: Scalars['Int'];
+  postId: Scalars['Int'];
+  commentId: Scalars['Int'];
+}>;
+
+
+export type VoteCommentMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'voteComment'>
 );
 
 export type GroupQueryVariables = Exact<{
@@ -631,11 +769,18 @@ export type PostQuery = (
   { __typename?: 'Query' }
   & { post?: Maybe<(
     { __typename?: 'Post' }
-    & Pick<Post, 'id' | 'createdAt' | 'updatedAt' | 'title' | 'points' | 'content' | 'voteStatus'>
+    & Pick<Post, 'id' | 'createdAt' | 'updatedAt' | 'title' | 'points' | 'content' | 'voteStatus' | 'textSnippet'>
     & { creator: (
       { __typename?: 'User' }
       & Pick<User, 'id' | 'username'>
-    ) }
+    ), comments: Array<(
+      { __typename?: 'Comment' }
+      & Pick<Comment, 'content' | 'commentId' | 'editMode' | 'postId' | 'points' | 'voteStatus' | 'creatorId' | 'createdAt' | 'updatedAt'>
+      & { creator: (
+        { __typename?: 'User' }
+        & Pick<User, 'displayName'>
+      ) }
+    )> }
   )> }
 );
 
@@ -657,6 +802,15 @@ export type PostsQuery = (
   ) }
 );
 
+export const CommentSnippetFragmentDoc = gql`
+    fragment CommentSnippet on Comment {
+  commentId
+  postId
+  points
+  voteStatus
+  creatorId
+}
+    `;
 export const ErrorDetailsFragmentDoc = gql`
     fragment ErrorDetails on FieldError {
   field
@@ -691,6 +845,20 @@ export const UserDetailsFragmentDoc = gql`
   displayName
 }
     `;
+export const CreateCommentDocument = gql`
+    mutation CreateComment($input: CreateCommentDetails!) {
+  createComment(input: $input) {
+    postId
+    commentId
+    creatorId
+    content
+  }
+}
+    `;
+
+export function useCreateCommentMutation() {
+  return Urql.useMutation<CreateCommentMutation, CreateCommentMutationVariables>(CreateCommentDocument);
+};
 export const CreateGroupDocument = gql`
     mutation CreateGroup($details: GroupCreationInput!) {
   createGroup(input: $details) {
@@ -730,6 +898,15 @@ export const CreatePostDocument = gql`
 export function useCreatePostMutation() {
   return Urql.useMutation<CreatePostMutation, CreatePostMutationVariables>(CreatePostDocument);
 };
+export const DeleteCommentDocument = gql`
+    mutation DeleteComment($postId: Int!, $commentId: Int!) {
+  deleteComment(postId: $postId, commentId: $commentId)
+}
+    `;
+
+export function useDeleteCommentMutation() {
+  return Urql.useMutation<DeleteCommentMutation, DeleteCommentMutationVariables>(DeleteCommentDocument);
+};
 export const DeletePostDocument = gql`
     mutation DeletePost($id: Int!) {
   deletePost(id: $id)
@@ -760,6 +937,19 @@ export const EditGroupDocument = gql`
 
 export function useEditGroupMutation() {
   return Urql.useMutation<EditGroupMutation, EditGroupMutationVariables>(EditGroupDocument);
+};
+export const EditModeDocument = gql`
+    mutation EditMode($postId: Int!, $commentId: Int!) {
+  editMode(postId: $postId, commentId: $commentId) {
+    postId
+    commentId
+    editMode
+  }
+}
+    `;
+
+export function useEditModeMutation() {
+  return Urql.useMutation<EditModeMutation, EditModeMutationVariables>(EditModeDocument);
 };
 export const ForgotPasswordDocument = gql`
     mutation ForgotPassword($email: String!) {
@@ -887,6 +1077,19 @@ ${UserDetailsFragmentDoc}`;
 export function useResetPasswordMutation() {
   return Urql.useMutation<ResetPasswordMutation, ResetPasswordMutationVariables>(ResetPasswordDocument);
 };
+export const UpdateCommentDocument = gql`
+    mutation UpdateComment($postId: Int!, $commentId: Int!, $content: String!) {
+  updateComment(postId: $postId, commentId: $commentId, content: $content) {
+    postId
+    commentId
+    content
+  }
+}
+    `;
+
+export function useUpdateCommentMutation() {
+  return Urql.useMutation<UpdateCommentMutation, UpdateCommentMutationVariables>(UpdateCommentDocument);
+};
 export const UpdatePostDocument = gql`
     mutation UpdatePost($id: Int!, $title: String!, $content: String!) {
   updatePost(id: $id, title: $title, content: $content) {
@@ -909,6 +1112,15 @@ export const VoteDocument = gql`
 
 export function useVoteMutation() {
   return Urql.useMutation<VoteMutation, VoteMutationVariables>(VoteDocument);
+};
+export const VoteCommentDocument = gql`
+    mutation VoteComment($value: Int!, $postId: Int!, $commentId: Int!) {
+  voteComment(value: $value, postId: $postId, commentId: $commentId)
+}
+    `;
+
+export function useVoteCommentMutation() {
+  return Urql.useMutation<VoteCommentMutation, VoteCommentMutationVariables>(VoteCommentDocument);
 };
 export const GroupDocument = gql`
     query Group($slug: String!) {
@@ -996,9 +1208,24 @@ export const PostDocument = gql`
     points
     content
     voteStatus
+    textSnippet
     creator {
       id
       username
+    }
+    comments(postID: $id) {
+      content
+      commentId
+      editMode
+      postId
+      points
+      voteStatus
+      creatorId
+      createdAt
+      updatedAt
+      creator {
+        displayName
+      }
     }
   }
 }

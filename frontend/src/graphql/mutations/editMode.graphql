@@ -1,0 +1,7 @@
+mutation EditMode($postId: Int!, $commentId: Int!) {
+  editMode(postId: $postId, commentId: $commentId) {
+    postId
+    commentId
+    editMode
+  }
+}

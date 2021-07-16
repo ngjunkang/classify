@@ -23,7 +23,6 @@ import {
 import CreateUrqlClient from "../utils/CreateUrqlClient";
 import isServer from "../utils/isServer";
 import { Typography } from "@material-ui/core";
-import ErrorIcon from "@material-ui/icons/Error";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -46,6 +45,14 @@ const useStyles = makeStyles((theme: Theme) =>
     flexGrowContent: {
       flexGrow: 1,
     },
+    flexRowContent: {
+      display: "flex",
+      flexDirection: "row",
+    },
+    flexTime: {
+      marginTop: 18,
+      marginLeft: 5,
+    },
   })
 );
 
@@ -65,6 +72,19 @@ const Forum = () => {
   });
 
   const [, deletePost] = useDeletePostMutation();
+  const timeStampStringToString = (timestamp: string): string => {
+    const date = new Date(parseInt(timestamp));
+    return date.toLocaleString("en", {
+      weekday: "short",
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour12: false,
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+    });
+  };
 
   return (
     <Layout variant="regular">
@@ -103,11 +123,16 @@ const Forum = () => {
                   <Paper key={p.id} className={styles.flexBox} elevation={2}>
                     <UpvoteSection post={p} loggedIn={me?.me ? true : false} />
                     <Box className={styles.flexGrowContent}>
-                      <NextLink href="/post/[id]" as={`/post/${p.id}`}>
-                        <Link>
-                          <h3>{p.title}</h3>
-                        </Link>
-                      </NextLink>
+                      <Box className={styles.flexRowContent}>
+                        <NextLink href="/post/[id]" as={`/post/${p.id}`}>
+                          <Link>
+                            <h3>{p.title}</h3>
+                          </Link>
+                        </NextLink>
+                        <Typography className={styles.flexTime} variant="body2">
+                          at {timeStampStringToString(p.updatedAt)}
+                        </Typography>
+                      </Box>
                       <text>{p.textSnippet}</text>
                     </Box>
                     {me?.me?.id !== p.creator.id ? null : (

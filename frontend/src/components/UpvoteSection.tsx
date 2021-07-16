@@ -2,7 +2,11 @@ import { Box, IconButton, Theme, Typography } from "@material-ui/core";
 import { KeyboardArrowUp, KeyboardArrowDown } from "@material-ui/icons";
 import { makeStyles, createStyles } from "@material-ui/core/styles";
 import React, { useState } from "react";
-import { PostSnippetFragment, useVoteMutation } from "../generated/graphql";
+import {
+  Post,
+  PostSnippetFragment,
+  useVoteMutation,
+} from "../generated/graphql";
 
 interface UpvoteSectionProps {
   post: PostSnippetFragment;
@@ -35,24 +39,16 @@ export const UpvoteSection: React.FC<UpvoteSectionProps> = ({
   post,
   loggedIn,
 }) => {
-  const [loadingState, setLoadingState] = useState<
-    "upvote-loading" | "downvote-loading" | "not-loading"
-  >("not-loading");
   const styles = useStyles();
   const [, vote] = useVoteMutation();
   return (
     <Box className={styles.flexBoxCol}>
       <IconButton
         onClick={async () => {
-          if (post.voteStatus === 1) {
-            return;
-          }
-          setLoadingState("upvote-loading");
           await vote({
             postId: post.id,
             value: 1,
           });
-          setLoadingState("not-loading");
         }}
         color={loggedIn && post.voteStatus === 1 ? "primary" : "default"}
       >
@@ -61,15 +57,10 @@ export const UpvoteSection: React.FC<UpvoteSectionProps> = ({
       <Typography>{post.points}</Typography>
       <IconButton
         onClick={async () => {
-          if (post.voteStatus === -1) {
-            return;
-          }
-          setLoadingState("downvote-loading");
           await vote({
             postId: post.id,
             value: -1,
           });
-          setLoadingState("not-loading");
         }}
         color={loggedIn && post.voteStatus === -1 ? "primary" : "default"}
       >
