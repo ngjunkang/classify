@@ -44,7 +44,7 @@ import isServer from "./isServer";
 
 const generateSubClient = (): SubscriptionClient => {
   const subscriptionClient = new SubscriptionClient(
-    "ws://localhost:4000/subscriptions",
+    process.env.NEXT_PUBLIC_SUBSCRIPTION_WS,
     {
       reconnect: true,
     }
