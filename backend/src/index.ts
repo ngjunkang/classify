@@ -6,7 +6,8 @@ import express, { Request, Response } from "express";
 import session, { Session, SessionData } from "express-session";
 import { RedisPubSub } from "graphql-redis-subscriptions";
 import helmet from "helmet";
-import { createServer } from "https";
+import { createServer as createHttpServer } from "http";
+import { createServer as createHttpsServer } from "https";
 import Redis from "ioredis";
 import "reflect-metadata";
 import { buildSchema } from "type-graphql";
@@ -125,13 +126,17 @@ const main = async () => {
   });
 
   // use http createServer to run a web socket too, with the old API
-  const httpsServer = createServer(app);
+  let webServer = createHttpServer(app);
+  if (PRODUCTION) {
+    webServer = createHttpsServer(app);
+  }
+
   apolloServer.applyMiddleware({ app, cors: false });
 
   // allow server to handle subscriptions
-  apolloServer.installSubscriptionHandlers(httpsServer);
+  apolloServer.installSubscriptionHandlers(webServer);
 
-  httpsServer.listen(parseInt(process.env.PORT), () => {
+  webServer.listen(parseInt(process.env.PORT), () => {
     console.log(
       "subscription server started on ws://localhost:" +
         process.env.PORT +
