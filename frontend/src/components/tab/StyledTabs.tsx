@@ -13,13 +13,17 @@ const StyledTabs = withStyles({
     justifyContent: "center",
     backgroundColor: "transparent",
     "& > span": {
-      maxWidth: 40,
+      maxWidth: "60%",
       width: "100%",
       backgroundColor: "#fff",
     },
   },
 })((props: StyledTabsProps) => (
-  <Tabs {...props} TabIndicatorProps={{ children: <span /> }} />
+  <Tabs
+    key={props.value}
+    {...props}
+    TabIndicatorProps={{ children: <span /> }}
+  />
 ));
 
 export default StyledTabs;
