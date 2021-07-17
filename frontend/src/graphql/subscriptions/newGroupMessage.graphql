@@ -1,0 +1,11 @@
+subscription NewGroupMessage($groupId: Int!) {
+  newGroupMessage(groupId: $groupId) {
+    id
+    createdAt
+    updatedAt
+    creator {
+      ...UserDetails
+    }
+    message
+  }
+}

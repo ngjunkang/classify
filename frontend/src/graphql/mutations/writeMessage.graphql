@@ -1,0 +1,11 @@
+mutation WriteMessage($input: GroupMessageInput!) {
+  writeMessage(input: $input) {
+    id
+    createdAt
+    updatedAt
+    creator {
+      ...UserDetails
+    }
+    message
+  }
+}
