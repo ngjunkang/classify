@@ -8,14 +8,18 @@ import {
   Int,
   Mutation,
   ObjectType,
+  Publisher,
+  PubSub,
   Query,
   Resolver,
   Root,
   UseMiddleware,
 } from "type-graphql";
 import { getRepository } from "typeorm";
+import { NEW_GROUP_MESSAGE_TOPIC } from "../constant";
 import { Group } from "../entities/Group";
 import { GroupInvite } from "../entities/GroupInvite";
+import { GroupMessage } from "../entities/GroupMessage";
 import { GroupRequest } from "../entities/GroupRequest";
 import { Membership } from "../entities/Membership";
 import { Module } from "../entities/Module";
@@ -97,6 +101,15 @@ class InviteToGroupByUserInput {
 
   @Field()
   username: string;
+}
+
+@InputType()
+class GroupMessageInput {
+  @Field(() => Int)
+  groupId: number;
+
+  @Field(() => String)
+  message: string;
 }
 
 @ObjectType()
@@ -560,5 +573,59 @@ export class GroupResolver {
         .andWhere("group.module_id = :moduleId", { moduleId: moduleId })
         .getMany();
     }
+  }
+
+  // message
+
+  // field resolver
+  @FieldResolver(() => [GroupMessage])
+  async messages(
+    @Root() root: Group,
+    @Ctx() { req }: ThisContext
+  ): Promise<GroupMessage[]> {
+    // check if user in group
+    const member = await Membership.findOne({
+      user_id: req.session.userId,
+      group_id: root.id,
+    });
+
+    if (!member) {
+      return [];
+    }
+
+    return getRepository(GroupMessage)
+      .createQueryBuilder("message")
+      .orderBy("message.createdAt", "ASC")
+      .where("message.group_id = :groupId", { groupId: root.id })
+      .getMany();
+  }
+
+  // new message needs context + arg (groupId, message)
+  @Mutation(() => GroupMessage)
+  @UseMiddleware(isAuth)
+  async writeMessage(
+    @Arg("input") { groupId, message }: GroupMessageInput,
+    @Ctx() { req }: ThisContext,
+    @PubSub(NEW_GROUP_MESSAGE_TOPIC) publish: Publisher<GroupMessage>
+  ): Promise<GroupMessage> {
+    // check if user in group
+    const member = await Membership.findOne({
+      user_id: req.session.userId,
+      group_id: groupId,
+    });
+
+    if (!member) {
+      throw new Error("not authorised to group");
+    }
+
+    const returnMessage = await GroupMessage.create({
+      creator_id: req.session.userId,
+      group_id: groupId,
+      message: message,
+    }).save();
+
+    await publish(returnMessage);
+
+    return returnMessage;
   }
 }
