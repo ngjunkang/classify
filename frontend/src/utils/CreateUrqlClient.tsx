@@ -4,38 +4,53 @@ import {
   QueryInput,
   Resolver,
 } from "@urql/exchange-graphcache";
+import gql from "graphql-tag";
 import Router from "next/router";
+import { SubscriptionClient } from "subscriptions-transport-ws";
 import {
   dedupExchange,
   Exchange,
   fetchExchange,
   stringifyVariables,
+  subscriptionExchange,
 } from "urql";
 import { pipe, tap } from "wonka";
 import {
   DeletePostMutationVariables,
   DisbandGroupMutationVariables,
   EditGroupMutationVariables,
-  GroupDocument,
-  GroupQuery,
+  Group,
+  GroupMessage,
   LeaveGroupMutationVariables,
   LoginMutation,
   LogoutMutation,
   MeDocument,
   MeQuery,
+  MeQueryVariables,
+  NewGroupMessageSubscription,
+  NewGroupMessageSubscriptionVariables,
   RegisterMutation,
   ReplyInviteMutation,
   ReplyInviteMutationVariables,
   ReplyRequestMutation,
   ReplyRequestMutationVariables,
   ResetPasswordMutation,
-  useGroupQuery,
-  User,
   UserDetailsFragment,
   VoteMutationVariables,
+  WriteMessageMutation,
+  WriteMessageMutationVariables,
 } from "../generated/graphql";
-import gql from "graphql-tag";
 import isServer from "./isServer";
+
+const generateSubClient = (): SubscriptionClient => {
+  const subscriptionClient = new SubscriptionClient(
+    "ws://localhost:4000/subscriptions",
+    {
+      reconnect: true,
+    }
+  );
+  return subscriptionClient;
+};
 
 function updateCacheQuery<Result, Query>(
   cache: Cache,
@@ -122,12 +137,158 @@ const CreateUrqlClient = (ssrExchange: any, ctx: any) => {
           PaginatedPosts: () => null,
         },
         resolvers: {
+          GroupMessage: {
+            updatedAt: (parent: GroupMessage) => {
+              if (!/^[0-9]+$/.test(parent.updatedAt)) {
+                return new Date(parent.updatedAt).valueOf().toString();
+              }
+              return parent.updatedAt;
+            },
+            createdAt: (parent: GroupMessage) => {
+              if (!/^[0-9]+$/.test(parent.createdAt)) {
+                return new Date(parent.createdAt).valueOf().toString();
+              }
+              return parent.createdAt;
+            },
+          },
           Query: {
             posts: cursorPagination(),
           },
         },
+        optimistic: {
+          writeMessage: (variables, cache, info) => {
+            const now: string = Date.parse(new Date().toString()).toString();
+            const me = cache.readQuery<MeQuery, MeQueryVariables>({
+              query: MeDocument,
+            });
+            return {
+              __typename: "GroupMessage",
+              id: 0,
+              createdAt: now,
+              updatedAt: now,
+              creator: me.me,
+              message: (variables as WriteMessageMutationVariables).input
+                .message,
+            };
+          },
+        },
         updates: {
+          Subscription: {
+            newGroupMessage(result, args, cache, info) {
+              const group = cache.readFragment<
+                Group,
+                NewGroupMessageSubscriptionVariables
+              >(
+                gql`
+                  fragment __ on Group {
+                    id
+                    messages {
+                      id
+                      createdAt
+                      updatedAt
+                      creator {
+                        id
+                        username
+                        displayName
+                      }
+                      message
+                    }
+                  }
+                `,
+                {
+                  id: (args as NewGroupMessageSubscriptionVariables).groupId,
+                } as any
+              );
+
+              if (group) {
+                if (group.messages) {
+                  cache.writeFragment<Group>(
+                    gql`
+                      fragment __ on Group {
+                        id
+                        messages {
+                          id
+                          createdAt
+                          updatedAt
+                          creator {
+                            id
+                            username
+                            displayName
+                          }
+                          message
+                        }
+                      }
+                    `,
+                    {
+                      id: (args as NewGroupMessageSubscriptionVariables)
+                        .groupId,
+                      messages: [
+                        ...group.messages,
+                        (result as NewGroupMessageSubscription).newGroupMessage,
+                      ],
+                    } as any
+                  );
+                }
+              }
+            },
+          },
           Mutation: {
+            writeMessage: (result, args, cache, info) => {
+              const group = cache.readFragment<
+                Group,
+                WriteMessageMutationVariables
+              >(
+                gql`
+                  fragment __ on Group {
+                    id
+                    messages {
+                      id
+                      createdAt
+                      updatedAt
+                      creator {
+                        id
+                        username
+                        displayName
+                      }
+                      message
+                    }
+                  }
+                `,
+                {
+                  id: (args as WriteMessageMutationVariables).input.groupId,
+                } as any
+              );
+
+              if (group) {
+                if (group.messages) {
+                  cache.writeFragment<Group>(
+                    gql`
+                      fragment __ on Group {
+                        id
+                        messages {
+                          id
+                          createdAt
+                          updatedAt
+                          creator {
+                            id
+                            username
+                            displayName
+                          }
+                          message
+                        }
+                      }
+                    `,
+                    {
+                      id: (args as WriteMessageMutationVariables).input.groupId,
+                      messages: [
+                        ...group.messages,
+                        (result as WriteMessageMutation).writeMessage,
+                      ],
+                    } as any
+                  );
+                }
+              }
+            },
             disbandGroup: (result, args, cache, info) => {
               cache.invalidate({
                 __typename: "Group",
@@ -418,6 +579,12 @@ const CreateUrqlClient = (ssrExchange: any, ctx: any) => {
       errorExchange,
       ssrExchange,
       fetchExchange,
+      subscriptionExchange({
+        forwardSubscription: (operation) => {
+          console.log(operation);
+          return generateSubClient().request(operation);
+        },
+      }),
     ],
   };
 };
