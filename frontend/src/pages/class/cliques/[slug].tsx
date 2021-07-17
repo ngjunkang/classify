@@ -1,9 +1,11 @@
 import {
   Avatar,
   Backdrop,
+  Box,
   Button,
   CircularProgress,
   Divider,
+  Fab,
   Grid,
   List,
   ListItem,
@@ -12,8 +14,8 @@ import {
   Theme,
   Typography,
 } from "@material-ui/core";
-import { createStyles, makeStyles } from "@material-ui/core/styles";
-import { Add } from "@material-ui/icons";
+import { createStyles, fade, makeStyles } from "@material-ui/core/styles";
+import { AccessTime, Add, Done, Send } from "@material-ui/icons";
 import { Alert } from "@material-ui/lab";
 import { Form, Formik } from "formik";
 import { withUrqlClient } from "next-urql";
@@ -24,6 +26,7 @@ import Layout from "../../../components/Layout";
 import LoadingButton from "../../../components/LoadingButton";
 import AlertSnackBar from "../../../components/misc/AlertSnackBar";
 import ConfirmationDialog from "../../../components/misc/ConfirmationDialog";
+import DataLoadingError from "../../../components/misc/DataLoadingError";
 import ModuleSelection from "../../../components/ModuleSelection";
 import StandardTextField from "../../../components/StandardTextField";
 import StyledTab from "../../../components/tab/StyledTab";
@@ -37,9 +40,11 @@ import {
   useInviteByUserNameMutation,
   useLeaveGroupMutation,
   useMeQuery,
+  useNewGroupMessageSubscription,
   useReplyInviteMutation,
   useReplyRequestMutation,
   useRequestToGroupMutation,
+  useWriteMessageMutation,
 } from "../../../generated/graphql";
 import CreateUrqlClient from "../../../utils/CreateUrqlClient";
 
@@ -67,6 +72,51 @@ const useStyles = makeStyles((theme: Theme) =>
     leaveGroup: {
       backgroundColor: "#b51300",
       color: "#fff",
+    },
+    messageSection: {
+      height: "calc(100vh - 395px)",
+      display: "flex",
+      flexDirection: "column",
+    },
+    messageInput: {
+      padding: theme.spacing(2),
+    },
+    messages: {
+      flexGrow: 1,
+      overflowY: "auto",
+    },
+    container: {
+      bottom: 0,
+    },
+    bubbleContainer: {
+      width: "100%",
+      display: "flex",
+    },
+    bubble: {
+      // border: "1.5px solid black",
+      borderRadius: "10px",
+      padding: "10px",
+      backgroundColor: theme.palette.primary.light,
+      display: "inline-block",
+      maxWidth: "95%",
+    },
+    right: {
+      justifyContent: "flex-end",
+    },
+    left: {
+      justifyContent: "flex-start",
+    },
+    inline: {
+      display: "inline",
+      fontWeight: "bold",
+    },
+    center: {
+      display: "flex",
+      flexGrow: 1,
+      padding: theme.spacing(2),
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: fade(theme.palette.background.default, 0.15),
     },
   })
 );
@@ -98,15 +148,33 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
   const [, inviteByUsername] = useInviteByUserNameMutation();
   const [, leaveGroup] = useLeaveGroupMutation();
   const [, disbandGroup] = useDisbandGroupMutation();
+  const [, writeMessage] = useWriteMessageMutation();
+  const [GROUP_ID, setGROUP_ID] = useState(0);
+  useNewGroupMessageSubscription(
+    {
+      variables: { groupId: GROUP_ID },
+      pause: GROUP_ID === 0,
+    },
+    (_, res) => {
+      return res;
+    }
+  );
+
   const [status, setStatus] = useState({ success: false, message: "" });
   const [open, setOpen] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
 
   useEffect(() => {
-    if (!meFetch && !me.me) {
+    if (!meFetch && !me?.me) {
       setValue(0);
     }
   }, [me]);
+
+  useEffect(() => {
+    if (data?.group?.isMember) {
+      setGROUP_ID(data.group.id);
+    }
+  }, [data?.group?.id]);
 
   // functions
   const handleChange = (event: React.ChangeEvent<{}>, newValue: number) => {
@@ -147,6 +215,7 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
     invite,
     requests,
     members,
+    messages,
   } = data.group;
 
   // functions
@@ -162,7 +231,7 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
 
   // members
   let membersSection = null;
-  if (!meFetch && me.me && isMember) {
+  if (!meFetch && me?.me && isMember) {
     membersSection = (
       <>
         <Grid xs={12} item>
@@ -289,7 +358,7 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
   };
 
   let requestToGroupSection = null;
-  if (!isMember || (!meFetch && !me.me)) {
+  if (!isMember || (!meFetch && !me?.me)) {
     requestToGroupSection = (
       <Button
         variant="contained"
@@ -383,10 +452,146 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
   );
 
   // messages
+  const timeStampStringToString = (timestamp: string): string => {
+    const date = new Date(parseInt(timestamp));
+    return date.toLocaleString("en", {
+      weekday: "short",
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour12: true,
+      hour: "numeric",
+      minute: "numeric",
+    });
+  };
+
+  let messageSection = null;
+  if (!meFetch && me?.me && isMember) {
+    if (messages.length) {
+      messageSection = (
+        <Box
+          className={classes.messages}
+          display="flex"
+          flexDirection="column-reverse"
+        >
+          <List>
+            {isMember &&
+              messages.map((message) => {
+                const isMe = me?.me?.id === message.creator.id;
+                return (
+                  <ListItem
+                    key={`${message.id} ${message.createdAt} ${Math.random()
+                      .toString(36)
+                      .substr(2, 9)}`}
+                  >
+                    <Box
+                      className={`${classes.bubbleContainer} ${
+                        isMe ? classes.right : classes.left
+                      }`}
+                    >
+                      <Box className={classes.bubble}>
+                        <ListItemText
+                          secondary={
+                            <React.Fragment>
+                              <Typography
+                                component="span"
+                                variant="body2"
+                                className={classes.inline}
+                                color="textPrimary"
+                              >
+                                {isMe ? "Me" : message.creator.displayName}
+                              </Typography>
+                            </React.Fragment>
+                          }
+                        />
+                        <ListItemText primary={message.message} />
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          textAlign="right"
+                        >
+                          <ListItemText
+                            secondary={timeStampStringToString(
+                              message.createdAt
+                            )}
+                          />
+                          {message.id ? <Done /> : <AccessTime />}
+                        </Box>
+                      </Box>
+                    </Box>
+                  </ListItem>
+                );
+              })}
+          </List>
+        </Box>
+      );
+    } else {
+      messageSection = (
+        <DataLoadingError text="No messages yet" className={classes.center} />
+      );
+    }
+  }
+
   let messageTab = null;
   messageTab = (
     <TabPanel value={value} index={1}>
-      <Typography>Coming Soon</Typography>
+      <Box className={classes.messageSection}>
+        {messageSection}
+        <Divider />
+
+        <Formik
+          initialValues={{
+            message: "",
+          }}
+          onSubmit={async (data, { resetForm }) => {
+            if (!data.message) {
+              return;
+            }
+
+            resetForm();
+
+            const { error } = await writeMessage({
+              input: { groupId: id, message: data.message },
+            });
+            if (error?.message.includes("not authorised to group")) {
+              setStatus({
+                success: false,
+                message: "Not authorised to send message!",
+              });
+              setOpen(true);
+            } else if (error?.networkError) {
+              setStatus({
+                success: false,
+                message: "Check your internet connection!",
+              });
+              setOpen(true);
+            }
+          }}
+        >
+          {() => {
+            return (
+              <Form>
+                <Grid container spacing={2} className={classes.messageInput}>
+                  <Grid item xs={11}>
+                    <StandardTextField
+                      label="Type your message here"
+                      name="message"
+                      optional
+                    />
+                  </Grid>
+                  <Grid item xs={1}>
+                    <Box mt={1}>
+                      <Fab color="primary" aria-label="add" type="submit">
+                        <Send />
+                      </Fab>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Form>
+            );
+          }}
+        </Formik>
+      </Box>
     </TabPanel>
   );
 
@@ -556,13 +761,13 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
             aria-label="clique page"
           >
             <StyledTab key={0} label="Info" {...a11yProps(0)} />
-            {!meFetch && me.me && isMember && (
+            {!meFetch && me?.me && isMember && (
               <StyledTab key={1} label="Messages" {...a11yProps(1)} />
             )}
-            {!meFetch && me.me && isMember && (
+            {!meFetch && me?.me && isMember && (
               <StyledTab key={2} label="Schedule" {...a11yProps(2)} />
             )}
-            {!meFetch && me.me && isLeader && (
+            {!meFetch && me?.me && isLeader && (
               <StyledTab key={3} label="Settings" {...a11yProps(3)} />
             )}
           </StyledTabs>
