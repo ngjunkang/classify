@@ -44,9 +44,5 @@ export class GroupMessage extends BaseEntity {
 
   @Field()
   @Column()
-  description!: string;
-
-  @Field()
-  @Column()
-  skillset!: string;
+  message!: string;
 }
