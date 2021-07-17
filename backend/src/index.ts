@@ -6,8 +6,7 @@ import express, { Request, Response } from "express";
 import session, { Session, SessionData } from "express-session";
 import { RedisPubSub } from "graphql-redis-subscriptions";
 import helmet from "helmet";
-import { createServer as createHttpServer } from "http";
-import { createServer as createHttpsServer } from "https";
+import { createServer } from "http";
 import Redis from "ioredis";
 import "reflect-metadata";
 import { buildSchema } from "type-graphql";
@@ -126,10 +125,7 @@ const main = async () => {
   });
 
   // use http createServer to run a web socket too, with the old API
-  let webServer = createHttpServer(app);
-  if (PRODUCTION) {
-    webServer = createHttpsServer(app);
-  }
+  const webServer = createServer(app);
 
   apolloServer.applyMiddleware({ app, cors: false });
 
