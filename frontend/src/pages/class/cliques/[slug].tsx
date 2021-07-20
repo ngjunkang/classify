@@ -1,6 +1,5 @@
 import {
   Avatar,
-  Backdrop,
   Box,
   Button,
   CircularProgress,
@@ -13,14 +12,18 @@ import {
   ListItemText,
   Theme,
   Typography,
+  IconButton,
+  Tooltip,
 } from "@material-ui/core";
 import { createStyles, fade, makeStyles } from "@material-ui/core/styles";
-import { AccessTime, Add, Done, Send } from "@material-ui/icons";
+import { AccessTime, Add, Done, Publish, Send, Undo } from "@material-ui/icons";
 import { Alert } from "@material-ui/lab";
+import { startOfWeek } from "date-fns";
 import { Form, Formik } from "formik";
 import { withUrqlClient } from "next-urql";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
+import ScheduleSelector from "react-schedule-selector";
 import CheckBoxField from "../../../components/CheckBoxField";
 import Layout from "../../../components/Layout";
 import LoadingButton from "../../../components/LoadingButton";
@@ -33,9 +36,11 @@ import StyledTab from "../../../components/tab/StyledTab";
 import StyledTabs from "../../../components/tab/StyledTabs";
 import TabPanel from "../../../components/tab/TabPanel";
 import TextAreaField from "../../../components/TextAreaField";
+import WeekPicker from "../../../components/WeekPicker";
 import {
   useDisbandGroupMutation,
   useEditGroupMutation,
+  useGetScheduleDatesQuery,
   useGroupQuery,
   useInviteByUserNameMutation,
   useLeaveGroupMutation,
@@ -44,6 +49,7 @@ import {
   useReplyInviteMutation,
   useReplyRequestMutation,
   useRequestToGroupMutation,
+  useSendScheduleDatesMutation,
   useWriteMessageMutation,
 } from "../../../generated/graphql";
 import CreateUrqlClient from "../../../utils/CreateUrqlClient";
@@ -118,6 +124,18 @@ const useStyles = makeStyles((theme: Theme) =>
       justifyContent: "center",
       backgroundColor: fade(theme.palette.background.default, 0.15),
     },
+    hover: {
+      backgroundColor: "rgb(232,232,232)",
+      textAlign: "center",
+      width: "100%",
+      height: "100%",
+      "&:hover": {
+        backgroundColor: "rgba(80, 200, 120, 0.2)",
+      },
+    },
+    opaque: {
+      opacity: 1 || 1,
+    },
   })
 );
 
@@ -129,6 +147,7 @@ const a11yProps = (index: any) => {
 };
 
 const CliquePage: React.FC<CliquePageProps> = ({}) => {
+  const classes = useStyles();
   const router = useRouter();
 
   // hooks
@@ -138,9 +157,26 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
     },
   });
   const [{ data: me, fetching: meFetch }] = useMeQuery();
+  const [value, setValue] = useState(2);
+  const [status, setStatus] = useState<{ success: boolean; message: string }>({
+    success: false,
+    message: "",
+  });
+  const [open, setOpen] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [GROUP_ID, setGROUP_ID] = useState(0);
+  const [startDate, setStartDate] = useState(startOfWeek(new Date()));
 
-  const classes = useStyles();
-  const [value, setValue] = useState(0);
+  const [{ data: queryScheduleDates, fetching: queryScheduleDatesFetching }] =
+    useGetScheduleDatesQuery({
+      variables: { input: { groupId: GROUP_ID, startDate } },
+      pause: GROUP_ID === 0,
+    });
+  const [scheduleDates, setScheduleDates] = useState<Date[]>([]);
+  const [originalDates, setOriginalDates] = useState<Date[]>([]);
+  const [otherDates, setOtherDates] = useState<Record<number, number>>({});
+
+  const [sendScheduleDoneFlag, setSendScheduleDoneFlag] = useState(true);
   const [, replyInvite] = useReplyInviteMutation();
   const [, replyRequest] = useReplyRequestMutation();
   const [, requestToGroup] = useRequestToGroupMutation();
@@ -149,7 +185,6 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
   const [, leaveGroup] = useLeaveGroupMutation();
   const [, disbandGroup] = useDisbandGroupMutation();
   const [, writeMessage] = useWriteMessageMutation();
-  const [GROUP_ID, setGROUP_ID] = useState(0);
   useNewGroupMessageSubscription(
     {
       variables: { groupId: GROUP_ID },
@@ -159,10 +194,14 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
       return res;
     }
   );
+  const [{ fetching: sendingScheduleDates }, sendScheduleDates] =
+    useSendScheduleDatesMutation();
 
-  const [status, setStatus] = useState({ success: false, message: "" });
-  const [open, setOpen] = useState(false);
-  const [openDialog, setOpenDialog] = useState(false);
+  useEffect(() => {
+    if (data?.group?.isMember) {
+      setGROUP_ID(data.group.id);
+    }
+  }, [fetching]);
 
   useEffect(() => {
     if (!meFetch && !me?.me) {
@@ -171,10 +210,37 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
   }, [me]);
 
   useEffect(() => {
-    if (data?.group?.isMember) {
-      setGROUP_ID(data.group.id);
+    if (
+      !queryScheduleDatesFetching &&
+      queryScheduleDates &&
+      !meFetch &&
+      me?.me
+    ) {
+      setOriginalDates(
+        queryScheduleDates.getScheduleDates
+          .filter((scheduleDate) => scheduleDate.user_id === me.me.id)
+          .map((scheduleDate) => new Date(parseInt(scheduleDate.timestamp)))
+      );
+
+      setScheduleDates(
+        queryScheduleDates.getScheduleDates
+          .filter((scheduleDate) => scheduleDate.user_id === me.me.id)
+          .map((scheduleDate) => new Date(parseInt(scheduleDate.timestamp)))
+      );
+
+      const otherDatesArray = queryScheduleDates.getScheduleDates.filter(
+        (scheduleDate) => scheduleDate.user_id !== me.me.id
+      );
+      const otherDatesRecord: Record<number, number> = {};
+      otherDatesArray.forEach((record) => {
+        const intTemp = parseInt(record.timestamp);
+        otherDatesRecord[intTemp] = otherDatesRecord[intTemp]
+          ? otherDatesRecord[intTemp] + 1
+          : 1;
+      });
+      setOtherDates(otherDatesRecord);
     }
-  }, [data?.group?.id]);
+  }, [queryScheduleDates]);
 
   // functions
   const handleChange = (event: React.ChangeEvent<{}>, newValue: number) => {
@@ -190,9 +256,11 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
 
   if (fetching) {
     return (
-      <Backdrop className={classes.backdrop} open={true}>
-        <CircularProgress color="inherit" />
-      </Backdrop>
+      <Layout>
+        <Box className={classes.center}>
+          <CircularProgress />
+        </Box>
+      </Layout>
     );
   } else if (!fetching && (!data || (data && !data.group))) {
     router.push("/class/cliques");
@@ -596,10 +664,145 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
   );
 
   // schedule
-  let scheduleTab = null;
-  scheduleTab = (
+
+  const handleScheduleChange = (newSchedule: Date[]) => {
+    setScheduleDates(newSchedule);
+  };
+
+  const handlePickerChange = (date: Date) => {
+    setStartDate(date);
+  };
+
+  function getDifference<V>(
+    array1: V[],
+    array2: V[],
+    equals: (item1: V, item2: V) => boolean
+  ): V[] {
+    return array1.filter(
+      (value1) => !array2.some((value2) => equals(value1, value2))
+    );
+  }
+
+  const compareDates = (item1: Date, item2: Date) => {
+    return item1.getTime() === item2.getTime();
+  };
+
+  const getScheduleDifference = (
+    date1: Date[],
+    date2: Date[]
+  ): { add: Date[]; remove: Date[] } => {
+    const remove = getDifference<Date>(date1, date2, compareDates);
+    const add = getDifference<Date>(date2, date1, compareDates);
+    return { add, remove };
+  };
+
+  const handleSendScheduleDates = async () => {
+    console.log(startDate);
+    setSendScheduleDoneFlag(false);
+    const difference = getScheduleDifference(originalDates, scheduleDates);
+    if (!difference.add.length && !difference.remove.length) {
+      setStatus({
+        success: false,
+        message: "No changes were made!",
+      });
+      setOpen(true);
+      setSendScheduleDoneFlag(false);
+      return;
+    }
+
+    const { data, error } = await sendScheduleDates({
+      input: { groupId: id, ...difference },
+    });
+
+    if (error?.message.includes("not authorised to group")) {
+      setStatus({
+        success: false,
+        message: "Not authorised to send message!",
+      });
+      setOpen(true);
+    } else if (error?.networkError) {
+      setStatus({
+        success: false,
+        message: "Check your internet connection!",
+      });
+      setOpen(true);
+    } else if (!error && data) {
+      setStatus(data.sendScheduleDates);
+      setOpen(true);
+    }
+    setSendScheduleDoneFlag(true);
+  };
+
+  const renderDateCell = (
+    datetime: Date,
+    selected: boolean,
+    refSetter: (dateCell: HTMLElement | null) => void
+  ) => {
+    let numOfVotes = otherDates[datetime.getTime()]
+      ? otherDates[datetime.getTime()]
+      : 0;
+
+    let backgroundColor = !selected ? "rgb(89, 154, 242)" : "rgb(80, 200, 120)";
+
+    if (selected) {
+      numOfVotes++;
+    } else {
+    }
+    return (
+      <div className={classes.hover} ref={refSetter}>
+        <div
+          style={{
+            width: `${(numOfVotes / members.length) * 100}%`,
+            opacity: `${(numOfVotes / members.length) * 100}%`,
+            height: "100%",
+            backgroundColor: backgroundColor,
+          }}
+        ></div>
+      </div>
+    );
+  };
+
+  let displaySchedule = null;
+  if (isMember) {
+    displaySchedule = (
+      <Box>
+        <Box display="flex">
+          <WeekPicker handleOnChange={handlePickerChange} />
+          <Box flexGrow={1} />
+          <Button
+            variant="contained"
+            color="primary"
+            endIcon={<Publish />}
+            disabled={
+              !sendScheduleDoneFlag ||
+              !(!queryScheduleDatesFetching && queryScheduleDates)
+            }
+            onClick={handleSendScheduleDates}
+          >
+            Submit
+          </Button>
+        </Box>
+        <Box mt={3}>
+          <ScheduleSelector
+            selection={scheduleDates}
+            numDays={7}
+            startDate={startDate}
+            dateFormat="DD MMM"
+            timeFormat="HH:mma"
+            minTime={0}
+            maxTime={24}
+            hourlyChunks={2}
+            onChange={handleScheduleChange}
+            renderDateCell={renderDateCell}
+          />
+        </Box>
+      </Box>
+    );
+  }
+
+  const scheduleTab = (
     <TabPanel value={value} index={2}>
-      <Typography>Coming Soon</Typography>
+      {displaySchedule}
     </TabPanel>
   );
 
@@ -628,7 +831,7 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
           }
         }}
       >
-        {({ isSubmitting, setFieldValue }) => (
+        {({ isSubmitting, setFieldValue, resetForm }) => (
           <Form>
             <TextAreaField
               label="Clique Description"
@@ -652,9 +855,24 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
               defaultChecked={is_private}
             />
 
-            <LoadingButton isLoading={isSubmitting} type="submit">
-              Save
-            </LoadingButton>
+            <Box display="flex">
+              <Box flexGrow={1} />
+              <Box mt={1}>
+                <Tooltip title="Undo text areas">
+                  <IconButton
+                    onClick={() => {
+                      setFieldValue("description", description);
+                      setFieldValue("requirements", requirements);
+                    }}
+                  >
+                    <Undo />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+              <LoadingButton isLoading={isSubmitting} type="submit">
+                Save
+              </LoadingButton>
+            </Box>
           </Form>
         )}
       </Formik>
@@ -688,9 +906,13 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
               label="Username"
               name="username"
             ></StandardTextField>
-            <LoadingButton isLoading={isSubmitting} type="submit">
-              Invite
-            </LoadingButton>
+
+            <Box display="flex">
+              <Box flexGrow={1} />
+              <LoadingButton isLoading={isSubmitting} type="submit">
+                Invite
+              </LoadingButton>
+            </Box>
           </Form>
         )}
       </Formik>
@@ -760,15 +982,35 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
             onChange={handleChange}
             aria-label="clique page"
           >
-            <StyledTab key={0} label="Info" {...a11yProps(0)} />
+            <StyledTab
+              key={0}
+              label="Info"
+              {...a11yProps(0)}
+              disabled={value === 0}
+            />
             {!meFetch && me?.me && isMember && (
-              <StyledTab key={1} label="Messages" {...a11yProps(1)} />
+              <StyledTab
+                key={1}
+                label="Messages"
+                {...a11yProps(1)}
+                disabled={value === 1}
+              />
             )}
             {!meFetch && me?.me && isMember && (
-              <StyledTab key={2} label="Schedule" {...a11yProps(2)} />
+              <StyledTab
+                key={2}
+                label="Schedule"
+                {...a11yProps(2)}
+                disabled={value === 2}
+              />
             )}
             {!meFetch && me?.me && isLeader && (
-              <StyledTab key={3} label="Settings" {...a11yProps(3)} />
+              <StyledTab
+                key={3}
+                label="Settings"
+                {...a11yProps(3)}
+                disabled={value === 3}
+              />
             )}
           </StyledTabs>
         </Grid>
