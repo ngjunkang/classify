@@ -135,6 +135,7 @@ const CreateUrqlClient = (ssrExchange: any, ctx: any) => {
       cacheExchange({
         keys: {
           PaginatedPosts: () => null,
+          GroupSchedule: () => null,
         },
         resolvers: {
           GroupMessage: {
@@ -581,7 +582,6 @@ const CreateUrqlClient = (ssrExchange: any, ctx: any) => {
       fetchExchange,
       subscriptionExchange({
         forwardSubscription: (operation) => {
-          console.log(operation);
           return generateSubClient().request(operation);
         },
       }),
