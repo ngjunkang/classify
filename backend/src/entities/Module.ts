@@ -10,6 +10,7 @@ import {
 } from "typeorm";
 import { Group } from "./Group";
 import { GroupUser } from "./GroupUser";
+import { Post } from "./Post";
 
 @ObjectType()
 @Entity()
@@ -29,6 +30,9 @@ export class Module extends BaseEntity {
 
   @OneToMany(() => GroupUser, (groupUser) => groupUser.module)
   groupUsers: GroupUser[];
+
+  @OneToMany(() => Post, (post) => post.module)
+  posts: Post[];
 
   @Field()
   @Column()

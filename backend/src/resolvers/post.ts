@@ -18,6 +18,7 @@ import isAuth from "../middlewares/isAuth";
 import { getConnection } from "typeorm";
 import { Upvote } from "../entities/Upvote";
 import { Comment } from "../entities/Comment";
+import { Module } from "../entities/Module";
 
 @InputType()
 class CreatePostDetails {
@@ -26,6 +27,9 @@ class CreatePostDetails {
 
   @Field()
   content: string;
+
+  @Field()
+  module_id: number;
 }
 
 @InputType()
@@ -50,6 +54,14 @@ export class PostResolver {
   @FieldResolver(() => String)
   textSnippet(@Root() root: Post) {
     return root.content.slice(0, 50);
+  }
+
+  @FieldResolver(() => Module, { nullable: true })
+  module(
+    @Root() post: Post,
+    @Ctx() { moduleLoader }: ThisContext
+  ): Promise<Module | undefined> {
+    return moduleLoader.load(post.module_id ? post.module_id : 0);
   }
 
   @FieldResolver(() => [Comment, { nullable: true }])
@@ -195,6 +207,7 @@ export class PostResolver {
   @Query(() => PaginatedPosts)
   async posts(
     @Arg("limit", () => Int) limit: number,
+    @Arg("moduleId", () => Int) moduleId: number,
     @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
     @Ctx() { req }: ThisContext
   ): Promise<PaginatedPosts> {
@@ -228,7 +241,15 @@ export class PostResolver {
       } 
     from post p
     inner join public.user u on u.id = p."creatorId"
-    ${cursor ? `where p."createdAt" < $${cursorIdx}` : ""}
+    ${
+      cursor
+        ? moduleId !== 0
+          ? `where p."createdAt" < $${cursorIdx} and p."module_id" = ${moduleId}`
+          : `where p."createdAt" < $${cursorIdx}`
+        : moduleId !== 0
+        ? `where p."module_id" = ${moduleId}`
+        : ""
+    }
     order by p."createdAt" DESC
     limit $1
     `,
@@ -282,8 +303,10 @@ export class PostResolver {
     @Arg("details") details: CreatePostDetails,
     @Ctx() { req }: ThisContext
   ): Promise<Post> {
+    const { module_id, ...noModProps } = details;
+    const userInput = module_id === 0 ? noModProps : details;
     return Post.create({
-      ...details,
+      ...userInput,
       creatorId: req.session.userId,
     }).save();
   }

@@ -10,6 +10,7 @@ import {
   OneToMany,
 } from "typeorm";
 import { Comment } from "./Comment";
+import { Module } from "./Module";
 import { Upvote } from "./Upvote";
 import { User } from "./User";
 
@@ -35,6 +36,14 @@ export class Post extends BaseEntity {
 
   @OneToMany(() => Comment, (comment) => comment.post)
   comments: Comment[];
+
+  // Module FK
+  @Field(() => Int, { nullable: true })
+  @Column({ type: "int", nullable: true, default: null })
+  module_id: number;
+
+  @ManyToOne(() => Module, (module) => module.posts)
+  module: Module;
 
   @Field()
   @Column({ type: "int", default: 0 })
