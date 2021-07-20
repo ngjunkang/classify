@@ -1,17 +1,18 @@
 import { Field, ObjectType } from "type-graphql";
 import {
-  Entity,
-  PrimaryGeneratedColumn,
+  BaseEntity,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
-  BaseEntity,
+  Entity,
   OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from "typeorm";
 import { Group } from "./Group";
 import { GroupInvite } from "./GroupInvite";
 import { GroupMessage } from "./GroupMessage";
 import { GroupRequest } from "./GroupRequest";
+import { GroupSchedule } from "./GroupSchedule";
 import { GroupUser } from "./GroupUser";
 import { Membership } from "./Membership";
 import { Post } from "./Post";
@@ -49,6 +50,9 @@ export class User extends BaseEntity {
 
   @OneToMany(() => GroupRequest, (groupRequest) => groupRequest.requestee)
   groupRequests: GroupRequest[];
+
+  @OneToMany(() => GroupSchedule, (groupSchedule) => groupSchedule.user)
+  groupSchedules: GroupSchedule[];
 
   @Field(() => String)
   @CreateDateColumn()
