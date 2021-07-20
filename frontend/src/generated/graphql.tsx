@@ -12,6 +12,8 @@ export type Scalars = {
   Boolean: boolean;
   Int: number;
   Float: number;
+  /** The javascript `Date` as string. Type represents date and time as the ISO Date string. */
+  DateTime: any;
 };
 
 export type CreatePostDetails = {
@@ -19,10 +21,16 @@ export type CreatePostDetails = {
   content: Scalars['String'];
 };
 
+
 export type FieldError = {
   __typename?: 'FieldError';
   field: Scalars['String'];
   message: Scalars['String'];
+};
+
+export type GetScheduleDatesInput = {
+  groupId: Scalars['Int'];
+  startDate: Scalars['DateTime'];
 };
 
 export type Group = {
@@ -67,8 +75,8 @@ export type GroupMessage = {
   id: Scalars['Float'];
   createdAt: Scalars['String'];
   updatedAt: Scalars['String'];
-  creator_id: Scalars['Float'];
-  group_id: Scalars['Float'];
+  creator_id: Scalars['Int'];
+  group_id: Scalars['Int'];
   message: Scalars['String'];
   creator: User;
 };
@@ -82,6 +90,14 @@ export type GroupResponse = {
   __typename?: 'GroupResponse';
   errors?: Maybe<Array<FieldError>>;
   group?: Maybe<Group>;
+};
+
+export type GroupSchedule = {
+  __typename?: 'GroupSchedule';
+  user_id: Scalars['Int'];
+  group_id: Scalars['Int'];
+  timestamp: Scalars['String'];
+  availability?: Maybe<Scalars['Boolean']>;
 };
 
 export type InviteToGroupByIdInput = {
@@ -123,6 +139,7 @@ export type Mutation = {
   editGroup: Status;
   createGroup: GroupResponse;
   writeMessage: GroupMessage;
+  sendScheduleDates: Status;
   vote: Scalars['Boolean'];
   createPost: Post;
   updatePost?: Maybe<Post>;
@@ -200,6 +217,11 @@ export type MutationWriteMessageArgs = {
 };
 
 
+export type MutationSendScheduleDatesArgs = {
+  input: SendScheduleDatesInput;
+};
+
+
 export type MutationVoteArgs = {
   value: Scalars['Int'];
   postId: Scalars['Int'];
@@ -248,6 +270,7 @@ export type Query = {
   group?: Maybe<Group>;
   myGroups: Array<Group>;
   groups: Array<Group>;
+  getScheduleDates: Array<GroupSchedule>;
   hey: Scalars['String'];
   modules: Array<Module>;
   posts: PaginatedPosts;
@@ -262,6 +285,11 @@ export type QueryGroupArgs = {
 
 export type QueryGroupsArgs = {
   moduleId: Scalars['Int'];
+};
+
+
+export type QueryGetScheduleDatesArgs = {
+  input: GetScheduleDatesInput;
 };
 
 
@@ -296,6 +324,12 @@ export type ReplyRequestInput = {
 export type ResetPasswordInput = {
   token: Scalars['String'];
   password: Scalars['String'];
+};
+
+export type SendScheduleDatesInput = {
+  groupId: Scalars['Int'];
+  remove: Array<Scalars['DateTime']>;
+  add: Array<Scalars['DateTime']>;
 };
 
 export type Status = {
@@ -567,6 +601,19 @@ export type ResetPasswordMutation = (
   ) }
 );
 
+export type SendScheduleDatesMutationVariables = Exact<{
+  input: SendScheduleDatesInput;
+}>;
+
+
+export type SendScheduleDatesMutation = (
+  { __typename?: 'Mutation' }
+  & { sendScheduleDates: (
+    { __typename?: 'Status' }
+    & Pick<Status, 'message' | 'success'>
+  ) }
+);
+
 export type UpdatePostMutationVariables = Exact<{
   id: Scalars['Int'];
   title: Scalars['String'];
@@ -608,6 +655,19 @@ export type WriteMessageMutation = (
       & UserDetailsFragment
     ) }
   ) }
+);
+
+export type GetScheduleDatesQueryVariables = Exact<{
+  input: GetScheduleDatesInput;
+}>;
+
+
+export type GetScheduleDatesQuery = (
+  { __typename?: 'Query' }
+  & { getScheduleDates: Array<(
+    { __typename?: 'GroupSchedule' }
+    & Pick<GroupSchedule, 'user_id' | 'group_id' | 'timestamp'>
+  )> }
 );
 
 export type GroupQueryVariables = Exact<{
@@ -961,6 +1021,18 @@ ${UserDetailsFragmentDoc}`;
 export function useResetPasswordMutation() {
   return Urql.useMutation<ResetPasswordMutation, ResetPasswordMutationVariables>(ResetPasswordDocument);
 };
+export const SendScheduleDatesDocument = gql`
+    mutation SendScheduleDates($input: SendScheduleDatesInput!) {
+  sendScheduleDates(input: $input) {
+    message
+    success
+  }
+}
+    `;
+
+export function useSendScheduleDatesMutation() {
+  return Urql.useMutation<SendScheduleDatesMutation, SendScheduleDatesMutationVariables>(SendScheduleDatesDocument);
+};
 export const UpdatePostDocument = gql`
     mutation UpdatePost($id: Int!, $title: String!, $content: String!) {
   updatePost(id: $id, title: $title, content: $content) {
@@ -1000,6 +1072,19 @@ export const WriteMessageDocument = gql`
 
 export function useWriteMessageMutation() {
   return Urql.useMutation<WriteMessageMutation, WriteMessageMutationVariables>(WriteMessageDocument);
+};
+export const GetScheduleDatesDocument = gql`
+    query GetScheduleDates($input: GetScheduleDatesInput!) {
+  getScheduleDates(input: $input) {
+    user_id
+    group_id
+    timestamp
+  }
+}
+    `;
+
+export function useGetScheduleDatesQuery(options: Omit<Urql.UseQueryArgs<GetScheduleDatesQueryVariables>, 'query'> = {}) {
+  return Urql.useQuery<GetScheduleDatesQuery>({ query: GetScheduleDatesDocument, ...options });
 };
 export const GroupDocument = gql`
     query Group($slug: String!) {

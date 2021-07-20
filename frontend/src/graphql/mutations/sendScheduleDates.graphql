@@ -1,0 +1,6 @@
+mutation SendScheduleDates($input: SendScheduleDatesInput!) {
+  sendScheduleDates(input: $input) {
+    message
+    success
+  }
+}

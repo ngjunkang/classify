@@ -21,6 +21,7 @@ import { Group } from "../entities/Group";
 import { GroupInvite } from "../entities/GroupInvite";
 import { GroupMessage } from "../entities/GroupMessage";
 import { GroupRequest } from "../entities/GroupRequest";
+import { GroupSchedule } from "../entities/GroupSchedule";
 import { Membership } from "../entities/Membership";
 import { Module } from "../entities/Module";
 import { User } from "../entities/User";
@@ -128,6 +129,27 @@ class Status {
 
   @Field(() => Boolean)
   success: boolean;
+}
+
+@InputType()
+class SendScheduleDatesInput {
+  @Field(() => Int)
+  groupId: number;
+
+  @Field(() => [Date])
+  remove: Date[];
+
+  @Field(() => [Date])
+  add: Date[];
+}
+
+@InputType()
+class GetScheduleDatesInput {
+  @Field(() => Int)
+  groupId: number;
+
+  @Field(() => Date)
+  startDate: Date;
 }
 
 @Resolver(Group)
@@ -627,5 +649,69 @@ export class GroupResolver {
     await publish(returnMessage);
 
     return returnMessage;
+  }
+
+  // schedule
+  @Mutation(() => Status)
+  async sendScheduleDates(
+    @Arg("input") { groupId, remove, add }: SendScheduleDatesInput,
+    @Ctx() { req }: ThisContext
+  ): Promise<Status> {
+    // not member
+    // check if user in group
+    const member = await Membership.findOne({
+      user_id: req.session.userId,
+      group_id: groupId,
+    });
+
+    if (!member) {
+      throw new Error("not authorised to group");
+    }
+
+    const removedDates = remove.map((date) => ({
+      group_id: groupId,
+      user_id: req.session.userId,
+      timestamp: date,
+      availability: undefined,
+    }));
+
+    const addedDates = add.map((date) => ({
+      group_id: groupId,
+      user_id: req.session.userId,
+      timestamp: date,
+      availability: true,
+    }));
+
+    await GroupSchedule.save(
+      GroupSchedule.create([...addedDates, ...removedDates])
+    );
+
+    return { success: true, message: "Update successful!" };
+  }
+
+  @Query(() => [GroupSchedule])
+  async getScheduleDates(
+    @Arg("input") { groupId, startDate }: GetScheduleDatesInput,
+    @Ctx() { req }: ThisContext
+  ): Promise<GroupSchedule[]> {
+    // check if user in group
+    const member = await Membership.findOne({
+      user_id: req.session.userId,
+      group_id: groupId,
+    });
+
+    if (!member) {
+      return [];
+    }
+
+    const endDate = new Date(
+      new Date(startDate).setDate(startDate.getDate() + 7)
+    );
+
+    return getRepository(GroupSchedule)
+      .createQueryBuilder("schedule")
+      .where("schedule.timestamp >= :startDate", { startDate })
+      .andWhere("schedule.timestamp < :endDate", { endDate })
+      .getMany();
   }
 }
