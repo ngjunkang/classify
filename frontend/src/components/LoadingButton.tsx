@@ -14,7 +14,12 @@ const LoadingButton: React.FC<LoadingButtonProps> = ({
 }) => {
   return (
     <Box mt={2} textAlign="center">
-      <Button {...props} disabled={props.disabled || isLoading} color="primary">
+      <Button
+        {...props}
+        disabled={props.disabled || isLoading}
+        color="primary"
+        variant="contained"
+      >
         {isLoading ? (
           <CircularProgress color="secondary" size="20px" />
         ) : (
