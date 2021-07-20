@@ -6,6 +6,11 @@ fragment PostSnippet on Post {
   points
   voteStatus
   textSnippet
+  module {
+    id
+    name
+    code
+  }
   creator {
     id
     username

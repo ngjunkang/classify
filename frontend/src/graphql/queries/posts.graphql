@@ -1,5 +1,5 @@
-query Posts($limit: Int!, $cursor: String) {
-  posts(limit: $limit, cursor: $cursor) {
+query Posts($module_id: Int!, $limit: Int!, $cursor: String) {
+  posts(moduleId: $module_id, limit: $limit, cursor: $cursor) {
     hasMore
     posts {
       ...PostSnippet

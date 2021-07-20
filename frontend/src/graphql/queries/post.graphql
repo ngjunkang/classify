@@ -8,6 +8,7 @@ query Post($id: Int!) {
     content
     voteStatus
     textSnippet
+    module_id
     creator {
       id
       username

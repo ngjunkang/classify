@@ -37,6 +37,7 @@ export type CreateCommentDetails = {
 export type CreatePostDetails = {
   title: Scalars['String'];
   content: Scalars['String'];
+  module_id: Scalars['Float'];
 };
 
 export type FieldError = {
@@ -266,6 +267,7 @@ export type Post = {
   id: Scalars['Float'];
   creatorId: Scalars['Float'];
   creator: User;
+  module_id?: Maybe<Scalars['Int']>;
   points: Scalars['Float'];
   voteStatus?: Maybe<Scalars['Int']>;
   createdAt: Scalars['String'];
@@ -273,6 +275,7 @@ export type Post = {
   title: Scalars['String'];
   content: Scalars['String'];
   textSnippet: Scalars['String'];
+  module?: Maybe<Module>;
   comments: Array<Comment>;
 };
 
@@ -297,6 +300,7 @@ export type Query = {
 
 export type QueryPostsArgs = {
   cursor?: Maybe<Scalars['String']>;
+  moduleId: Scalars['Int'];
   limit: Scalars['Int'];
 };
 
@@ -378,7 +382,10 @@ export type ErrorDetailsFragment = (
 export type PostSnippetFragment = (
   { __typename?: 'Post' }
   & Pick<Post, 'id' | 'createdAt' | 'updatedAt' | 'title' | 'points' | 'voteStatus' | 'textSnippet'>
-  & { creator: (
+  & { module?: Maybe<(
+    { __typename?: 'Module' }
+    & Pick<Module, 'id' | 'name' | 'code'>
+  )>, creator: (
     { __typename?: 'User' }
     & Pick<User, 'id' | 'username'>
   ) }
@@ -769,7 +776,7 @@ export type PostQuery = (
   { __typename?: 'Query' }
   & { post?: Maybe<(
     { __typename?: 'Post' }
-    & Pick<Post, 'id' | 'createdAt' | 'updatedAt' | 'title' | 'points' | 'content' | 'voteStatus' | 'textSnippet'>
+    & Pick<Post, 'id' | 'createdAt' | 'updatedAt' | 'title' | 'points' | 'content' | 'voteStatus' | 'textSnippet' | 'module_id'>
     & { creator: (
       { __typename?: 'User' }
       & Pick<User, 'id' | 'username'>
@@ -785,6 +792,7 @@ export type PostQuery = (
 );
 
 export type PostsQueryVariables = Exact<{
+  module_id: Scalars['Int'];
   limit: Scalars['Int'];
   cursor?: Maybe<Scalars['String']>;
 }>;
@@ -826,6 +834,11 @@ export const PostSnippetFragmentDoc = gql`
   points
   voteStatus
   textSnippet
+  module {
+    id
+    name
+    code
+  }
   creator {
     id
     username
@@ -1209,6 +1222,7 @@ export const PostDocument = gql`
     content
     voteStatus
     textSnippet
+    module_id
     creator {
       id
       username
@@ -1235,8 +1249,8 @@ export function usePostQuery(options: Omit<Urql.UseQueryArgs<PostQueryVariables>
   return Urql.useQuery<PostQuery>({ query: PostDocument, ...options });
 };
 export const PostsDocument = gql`
-    query Posts($limit: Int!, $cursor: String) {
-  posts(limit: $limit, cursor: $cursor) {
+    query Posts($module_id: Int!, $limit: Int!, $cursor: String) {
+  posts(moduleId: $module_id, limit: $limit, cursor: $cursor) {
     hasMore
     posts {
       ...PostSnippet

@@ -1,6 +1,8 @@
 import {
   Box,
   Button,
+  Chip,
+  Container,
   Grid,
   IconButton,
   Link,
@@ -23,6 +25,7 @@ import {
 import CreateUrqlClient from "../utils/CreateUrqlClient";
 import isServer from "../utils/isServer";
 import { Typography } from "@material-ui/core";
+import ModuleSelection from "../components/ModuleSelection";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -53,6 +56,15 @@ const useStyles = makeStyles((theme: Theme) =>
       marginTop: 18,
       marginLeft: 5,
     },
+    title: {
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+    },
+    chip: {
+      marginTop: 16,
+      marginLeft: 10,
+    },
   })
 );
 
@@ -60,8 +72,9 @@ const Forum = () => {
   const router = useRouter();
   const styles = useStyles();
   const [variables, setVariables] = useState({
-    limit: 2,
+    limit: 5,
     cursor: null as null | string,
+    module_id: 0,
   });
 
   const [{ data, fetching }] = usePostsQuery({
@@ -88,24 +101,23 @@ const Forum = () => {
 
   return (
     <Layout variant="regular">
-      <Typography variant="h2" color="primary">
+      <Typography className={styles.title} variant="h2" color="primary">
         Whiteboard
       </Typography>
-      <div>{`Welcome${
-        me?.me ? ", " + me.me.username : ""
-      }! Please test out our forum functions`}</div>
-      <br />
-      {/* <Container key="contain it">
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((id) => (
-          <Button key={id}>Topic {id}</Button>
-        ))}
-        <Button> + </Button>
-      </Container> */}
       <Box className={styles.flexBoxRight}>
         <NextLink href="/create-post">
           <Button> create post</Button>
         </NextLink>
       </Box>
+      <ModuleSelection
+        handleOnChange={(e, value) => {
+          setVariables({
+            limit: variables.limit,
+            cursor: null,
+            module_id: !value ? 0 : value.id,
+          });
+        }}
+      />
       {!fetching && !data ? (
         <div>your get query failed for some reason</div>
       ) : fetching && !data ? (
@@ -132,8 +144,16 @@ const Forum = () => {
                         <Typography className={styles.flexTime} variant="body2">
                           at {timeStampStringToString(p.updatedAt)}
                         </Typography>
+                        {p.module ? (
+                          <Chip
+                            className={styles.chip}
+                            color="primary"
+                            size="small"
+                            label={p.module.code}
+                          />
+                        ) : null}
                       </Box>
-                      <text>{p.textSnippet}</text>
+                      <Typography variant="body2">{p.textSnippet}</Typography>
                     </Box>
                     {me?.me?.id !== p.creator.id ? null : (
                       <Box>
@@ -166,6 +186,7 @@ const Forum = () => {
             setVariables({
               limit: variables.limit,
               cursor: data.posts.posts[data.posts.posts.length - 1].createdAt,
+              module_id: variables.module_id,
             });
           }}
         >
