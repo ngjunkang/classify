@@ -157,7 +157,7 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
     },
   });
   const [{ data: me, fetching: meFetch }] = useMeQuery();
-  const [value, setValue] = useState(2);
+  const [value, setValue] = useState(0);
   const [status, setStatus] = useState<{ success: boolean; message: string }>({
     success: false,
     message: "",
@@ -194,8 +194,7 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
       return res;
     }
   );
-  const [{ fetching: sendingScheduleDates }, sendScheduleDates] =
-    useSendScheduleDatesMutation();
+  const [, sendScheduleDates] = useSendScheduleDatesMutation();
 
   useEffect(() => {
     if (data?.group?.isMember) {
