@@ -1,4 +1,4 @@
-import { Field, ObjectType } from "type-graphql";
+import { Field, Int, ObjectType } from "type-graphql";
 import {
   BaseEntity,
   Column,
@@ -27,26 +27,22 @@ export class GroupMessage extends BaseEntity {
   updatedAt: Date;
 
   // User FK
-  @Field()
-  @Column()
+  @Field(() => Int)
+  @Column({ type: "int" })
   creator_id: number;
 
   @ManyToOne(() => User, (user) => user.groupMessages)
   creator: User;
 
   // Group FK
-  @Field()
-  @Column()
+  @Field(() => Int)
+  @Column({ type: "int" })
   group_id: number;
 
   @ManyToOne(() => Group, (group) => group.messages, { onDelete: "CASCADE" })
   group: Group;
 
-  @Field()
+  @Field(() => String)
   @Column()
-  description!: string;
-
-  @Field()
-  @Column()
-  skillset!: string;
+  message!: string;
 }

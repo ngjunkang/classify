@@ -12,16 +12,18 @@ const StyledTab = withStyles((theme: Theme) =>
       textTransform: "none",
       color: "#fff",
       backgroundColor: "#635ee7",
+      borderStartEndRadius: 8,
+      borderStartStartRadius: 8,
       fontWeight: theme.typography.fontWeightRegular,
       fontSize: theme.typography.pxToRem(15),
-      marginRight: theme.spacing(1),
+      marginRight: 2,
       "&:focus": {
         opacity: 1,
       },
     },
   })
 )(({ label, ...props }: StyledTabProps & TabProps) => (
-  <Tab label={label} {...props} />
+  <Tab key={label} label={label} {...props} />
 ));
 
 export default StyledTab;

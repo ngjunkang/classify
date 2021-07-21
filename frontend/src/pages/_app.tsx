@@ -6,6 +6,7 @@ import React from "react";
 import theme from "../styles/theme";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
+import "../styles/appStyles.css";
 
 export default function MyApp(props: AppProps) {
   const { Component, pageProps } = props;

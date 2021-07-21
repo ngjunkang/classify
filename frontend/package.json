@@ -9,11 +9,14 @@
     "gen": "graphql-codegen --config codegen.yml"
   },
   "dependencies": {
+    "@date-io/date-fns": "1.x",
     "@material-ui/core": "^4.11.4",
     "@material-ui/icons": "^4.11.2",
     "@material-ui/lab": "^4.0.0-alpha.58",
+    "@material-ui/pickers": "^3.3.10",
     "@urql/exchange-graphcache": "^4.1.1",
     "clsx": "^1.1.1",
+    "date-fns": "^2.22.1",
     "formik": "^2.2.6",
     "graphql": "^15.5.0",
     "graphql-tag": "^2.12.4",
@@ -23,7 +26,10 @@
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "react-is": "^17.0.2",
+    "react-schedule-selector": "^3.0.0",
     "react-window": "^1.8.6",
+    "styled-components": "^5.3.0",
+    "subscriptions-transport-ws": "^0.9.19",
     "urql": "^2.0.3"
   },
   "devDependencies": {
@@ -35,6 +41,7 @@
     "@types/react": "^17.0.5",
     "@types/react-window": "^1.8.3",
     "babel-plugin-import": "^1.13.3",
+    "core-js": "^3.15.2",
     "typescript": "^4.2.4"
   }
 }

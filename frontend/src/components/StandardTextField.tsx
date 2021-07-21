@@ -5,6 +5,7 @@ import React from "react";
 interface standardTextFieldProps {
   label: string;
   wantAutocomplete?: boolean;
+  optional?: boolean;
 }
 
 const StandardTextField: React.FC<FieldAttributes<standardTextFieldProps>> = ({
@@ -21,7 +22,7 @@ const StandardTextField: React.FC<FieldAttributes<standardTextFieldProps>> = ({
         helperText={errorText}
         error={!!errorText}
         fullWidth
-        required
+        required={props.optional ? false : true}
         variant="outlined"
         autoComplete={props.wantAutocomplete ? "on" : "off"}
       />

@@ -6,8 +6,9 @@ import {
   ListItemText,
 } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
-import React from "react";
 import NextLink from "next/link";
+import React from "react";
+import { useMeQuery } from "../generated/graphql";
 
 interface SideBarProps {
   open: boolean;
@@ -23,12 +24,15 @@ const useStyles = makeStyles({
 });
 
 const routes = [
-  { label: "Whiteboard", route: "/whiteboard" },
-  { label: "Cliques", route: "/class/cliques" },
+  { label: "Home", route: "/", isPublic: true },
+  { label: "Whiteboard", route: "/whiteboard", isPublic: true },
+  { label: "Cliques", route: "/class/cliques", isPublic: true },
+  { label: "My Cliques", route: "/class/cliques/mine", isPublic: false },
 ];
 
 const SideBar: React.FC<SideBarProps> = ({ open, toggleDrawer }) => {
   const classes = useStyles();
+  const [{ data, fetching }] = useMeQuery();
 
   return (
     <Drawer anchor="left" open={open} onClose={toggleDrawer(false)}>
@@ -39,20 +43,26 @@ const SideBar: React.FC<SideBarProps> = ({ open, toggleDrawer }) => {
         onKeyDown={toggleDrawer(false)}
       >
         <List>
-          {routes.map(({ label, route }, index) => (
-            <NextLink href={route} key={index}>
-              <ListItem button>
-                <ListItemText primary={label} />
-              </ListItem>
-            </NextLink>
-          ))}
+          {routes.map(({ label, route, isPublic }, index) => {
+            if (!isPublic && (fetching || (!fetching && !data?.me))) {
+              return null;
+            }
+
+            return (
+              <NextLink href={route} key={index}>
+                <ListItem button>
+                  <ListItemText primary={label} />
+                </ListItem>
+              </NextLink>
+            );
+          })}
           <Divider />
           <ListItem button>
             <ListItemText
               primary="Report bugs"
               onClick={() =>
                 window.open(
-                  "https://forms.gle/aTP65LHmboyWeG1r7",
+                  "https://github.com/ngjunkang/classify/issues",
                   "_blank",
                   "noopener noreferrer"
                 )

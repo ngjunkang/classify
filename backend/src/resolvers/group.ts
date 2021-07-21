@@ -8,15 +8,20 @@ import {
   Int,
   Mutation,
   ObjectType,
+  Publisher,
+  PubSub,
   Query,
   Resolver,
   Root,
   UseMiddleware,
 } from "type-graphql";
 import { getRepository } from "typeorm";
+import { NEW_GROUP_MESSAGE_TOPIC } from "../constant";
 import { Group } from "../entities/Group";
 import { GroupInvite } from "../entities/GroupInvite";
+import { GroupMessage } from "../entities/GroupMessage";
 import { GroupRequest } from "../entities/GroupRequest";
+import { GroupSchedule } from "../entities/GroupSchedule";
 import { Membership } from "../entities/Membership";
 import { Module } from "../entities/Module";
 import { User } from "../entities/User";
@@ -99,6 +104,15 @@ class InviteToGroupByUserInput {
   username: string;
 }
 
+@InputType()
+class GroupMessageInput {
+  @Field(() => Int)
+  groupId: number;
+
+  @Field(() => String)
+  message: string;
+}
+
 @ObjectType()
 class GroupResponse {
   @Field(() => [FieldError], { nullable: true })
@@ -115,6 +129,27 @@ class Status {
 
   @Field(() => Boolean)
   success: boolean;
+}
+
+@InputType()
+class SendScheduleDatesInput {
+  @Field(() => Int)
+  groupId: number;
+
+  @Field(() => [Date])
+  remove: Date[];
+
+  @Field(() => [Date])
+  add: Date[];
+}
+
+@InputType()
+class GetScheduleDatesInput {
+  @Field(() => Int)
+  groupId: number;
+
+  @Field(() => Date)
+  startDate: Date;
 }
 
 @Resolver(Group)
@@ -542,8 +577,29 @@ export class GroupResolver {
   }
 
   @Query(() => [Group])
-  myGroups(@Ctx() { req }: ThisContext): Promise<Group[]> {
-    return Group.find({ creator_id: req.session.userId });
+  @UseMiddleware(isAuth)
+  async myGroups(
+    @Arg("moduleId", () => Int) moduleId: number,
+    @Ctx() { req }: ThisContext
+  ): Promise<Group[]> {
+    const memberships = await Membership.find({
+      user_id: req.session.userId,
+    });
+
+    const groupIds = memberships.map((membership) => membership.group_id);
+
+    const qb = getRepository(Group)
+      .createQueryBuilder("group")
+      .andWhereInIds(groupIds)
+      .orderBy("group.createdAt", "DESC");
+
+    if (!moduleId) {
+      return qb.getMany();
+    } else {
+      return qb
+        .andWhere("group.module_id = :moduleId", { moduleId: moduleId })
+        .getMany();
+    }
   }
 
   @Query(() => [Group])
@@ -560,5 +616,124 @@ export class GroupResolver {
         .andWhere("group.module_id = :moduleId", { moduleId: moduleId })
         .getMany();
     }
+  }
+
+  // message
+
+  // field resolver
+  @FieldResolver(() => [GroupMessage])
+  async messages(
+    @Root() root: Group,
+    @Ctx() { req }: ThisContext
+  ): Promise<GroupMessage[]> {
+    // check if user in group
+    const member = await Membership.findOne({
+      user_id: req.session.userId,
+      group_id: root.id,
+    });
+
+    if (!member) {
+      return [];
+    }
+
+    return getRepository(GroupMessage)
+      .createQueryBuilder("message")
+      .orderBy("message.createdAt", "ASC")
+      .where("message.group_id = :groupId", { groupId: root.id })
+      .getMany();
+  }
+
+  // new message needs context + arg (groupId, message)
+  @Mutation(() => GroupMessage)
+  @UseMiddleware(isAuth)
+  async writeMessage(
+    @Arg("input") { groupId, message }: GroupMessageInput,
+    @Ctx() { req }: ThisContext,
+    @PubSub(NEW_GROUP_MESSAGE_TOPIC) publish: Publisher<GroupMessage>
+  ): Promise<GroupMessage> {
+    // check if user in group
+    const member = await Membership.findOne({
+      user_id: req.session.userId,
+      group_id: groupId,
+    });
+
+    if (!member) {
+      throw new Error("not authorised to group");
+    }
+
+    const returnMessage = await GroupMessage.create({
+      creator_id: req.session.userId,
+      group_id: groupId,
+      message: message,
+    }).save();
+
+    await publish(returnMessage);
+
+    return returnMessage;
+  }
+
+  // schedule
+  @Mutation(() => Status)
+  async sendScheduleDates(
+    @Arg("input") { groupId, remove, add }: SendScheduleDatesInput,
+    @Ctx() { req }: ThisContext
+  ): Promise<Status> {
+    // not member
+    // check if user in group
+    const member = await Membership.findOne({
+      user_id: req.session.userId,
+      group_id: groupId,
+    });
+
+    if (!member) {
+      throw new Error("not authorised to group");
+    }
+
+    const removedDates = remove.map((date) => ({
+      group_id: groupId,
+      user_id: req.session.userId,
+      timestamp: date,
+      availability: null,
+    }));
+
+    const addedDates = add.map((date) => ({
+      group_id: groupId,
+      user_id: req.session.userId,
+      timestamp: date,
+      availability: true,
+    }));
+
+    await GroupSchedule.save(
+      GroupSchedule.create([...addedDates, ...removedDates])
+    );
+
+    return { success: true, message: "Update successful!" };
+  }
+
+  @Query(() => [GroupSchedule])
+  async getScheduleDates(
+    @Arg("input") { groupId, startDate }: GetScheduleDatesInput,
+    @Ctx() { req }: ThisContext
+  ): Promise<GroupSchedule[]> {
+    // check if user in group
+    const member = await Membership.findOne({
+      user_id: req.session.userId,
+      group_id: groupId,
+    });
+
+    if (!member) {
+      return [];
+    }
+
+    const endDate = new Date(
+      new Date(startDate).setDate(startDate.getDate() + 7)
+    );
+
+    return getRepository(GroupSchedule)
+      .createQueryBuilder("schedule")
+      .where("schedule.timestamp >= :startDate", { startDate })
+      .andWhere("schedule.timestamp < :endDate", { endDate })
+      .andWhere("schedule.availability = TRUE")
+      .getMany();
   }
 }

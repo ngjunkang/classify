@@ -129,7 +129,7 @@ const GroupListItem: React.FC<Partial<Group> & GroupListItemProps> = ({
   }
 
   let buttonSection = null;
-  if (!fetching && data.me && isLeader) {
+  if (!fetching && data?.me && isLeader) {
     buttonSection = (
       <NextLink href="/class/cliques/[slug]" as={`/class/cliques/${slug}`}>
         <Tooltip title="Edit">

@@ -1,0 +1,7 @@
+query GetScheduleDates($input: GetScheduleDatesInput!) {
+  getScheduleDates(input: $input) {
+    user_id
+    group_id
+    timestamp
+  }
+}

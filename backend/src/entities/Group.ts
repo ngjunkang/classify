@@ -9,12 +9,13 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
-import { Module } from "./Module";
 import { GroupInvite } from "./GroupInvite";
 import { GroupMessage } from "./GroupMessage";
-import { Membership } from "./Membership";
-import { User } from "./User";
 import { GroupRequest } from "./GroupRequest";
+import { GroupSchedule } from "./GroupSchedule";
+import { Membership } from "./Membership";
+import { Module } from "./Module";
+import { User } from "./User";
 
 @ObjectType()
 @Entity()
@@ -46,6 +47,10 @@ export class Group extends BaseEntity {
   // Group PK to GroupRequest
   @OneToMany(() => GroupRequest, (groupRequest) => groupRequest.group)
   requests: GroupRequest[];
+
+  // Group PK to GroupRequest
+  @OneToMany(() => GroupSchedule, (groupSchedule) => groupSchedule.group)
+  schedules: GroupSchedule[];
 
   // User FK
   @Field(() => Int)

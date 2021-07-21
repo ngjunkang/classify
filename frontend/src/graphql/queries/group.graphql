@@ -20,5 +20,14 @@ query Group($slug: String!) {
     members {
       ...UserDetails
     }
+    messages {
+      id
+      createdAt
+      updatedAt
+      creator {
+        ...UserDetails
+      }
+      message
+    }
   }
 }

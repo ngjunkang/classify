@@ -35,7 +35,6 @@ const CreateNewClique: React.FC<CreateNewCliqueProps> = ({}) => {
           module_id: 0,
         }}
         onSubmit={async (data, { setErrors }) => {
-          console.log(data);
           const res = await createGroup({ details: data });
 
           if (res.data?.createGroup.errors) {

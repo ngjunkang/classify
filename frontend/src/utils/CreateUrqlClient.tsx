@@ -4,45 +4,62 @@ import {
   QueryInput,
   Resolver,
 } from "@urql/exchange-graphcache";
+import startOfWeek from "date-fns/startOfWeek";
+import gql from "graphql-tag";
 import Router from "next/router";
+import { SubscriptionClient } from "subscriptions-transport-ws";
 import {
   dedupExchange,
   Exchange,
   fetchExchange,
   stringifyVariables,
+  subscriptionExchange,
 } from "urql";
 import { pipe, tap } from "wonka";
 import {
   CreateCommentMutationVariables,
-  DeleteCommentMutationVariables,
   DeletePostMutationVariables,
   DisbandGroupMutationVariables,
   EditGroupMutationVariables,
   EditModeMutationVariables,
-  EditUserMutation,
-  GroupDocument,
-  GroupQuery,
+  GetScheduleDatesDocument,
+  GetScheduleDatesQuery,
+  Group,
+  GroupMessage,
   LeaveGroupMutationVariables,
   LoginMutation,
   LogoutMutation,
   MeDocument,
   MeQuery,
+  MeQueryVariables,
+  NewGroupMessageSubscription,
+  NewGroupMessageSubscriptionVariables,
   RegisterMutation,
   ReplyInviteMutation,
   ReplyInviteMutationVariables,
   ReplyRequestMutation,
   ReplyRequestMutationVariables,
   ResetPasswordMutation,
+  SendScheduleDatesMutation,
+  SendScheduleDatesMutationVariables,
   ToggleEditMutationVariables,
-  useGroupQuery,
-  User,
   UserDetailsFragment,
-  VoteCommentDocument,
   VoteCommentMutationVariables,
   VoteMutationVariables,
+  WriteMessageMutation,
+  WriteMessageMutationVariables,
 } from "../generated/graphql";
-import gql from "graphql-tag";
 import isServer from "./isServer";
+
+const generateSubClient = (): SubscriptionClient => {
+  const subscriptionClient = new SubscriptionClient(
+    process.env.NEXT_PUBLIC_SUBSCRIPTION_WS,
+    {
+      reconnect: true,
+    }
+  );
+  return subscriptionClient;
+};
 
 function updateCacheQuery<Result, Query>(
   cache: Cache,
@@ -56,16 +73,18 @@ function updateCacheQuery<Result, Query>(
   );
 }
 
-const errorExchange: Exchange = ({ forward }) => (ops$) => {
-  return pipe(
-    forward(ops$),
-    tap(({ error }) => {
-      if (error?.message.includes("not authenticated")) {
-        Router.replace("/login?next=" + Router.asPath);
-      }
-    })
-  );
-};
+const errorExchange: Exchange =
+  ({ forward }) =>
+  (ops$) => {
+    return pipe(
+      forward(ops$),
+      tap(({ error }) => {
+        if (error?.message.includes("not authenticated")) {
+          Router.replace("/login?next=" + Router.asPath);
+        }
+      })
+    );
+  };
 
 export const cursorPagination = (): Resolver => {
   return (_parent, fieldArgs, cache, info) => {
@@ -129,14 +148,223 @@ const CreateUrqlClient = (ssrExchange: any, ctx: any) => {
       cacheExchange({
         keys: {
           PaginatedPosts: () => null,
+          GroupSchedule: () => null,
         },
         resolvers: {
+          GroupMessage: {
+            updatedAt: (parent: GroupMessage) => {
+              if (!/^[0-9]+$/.test(parent.updatedAt)) {
+                return new Date(parent.updatedAt).valueOf().toString();
+              }
+              return parent.updatedAt;
+            },
+            createdAt: (parent: GroupMessage) => {
+              if (!/^[0-9]+$/.test(parent.createdAt)) {
+                return new Date(parent.createdAt).valueOf().toString();
+              }
+              return parent.createdAt;
+            },
+          },
           Query: {
             posts: cursorPagination(),
           },
         },
+        optimistic: {
+          writeMessage: (variables, cache, info) => {
+            const now: string = Date.parse(new Date().toString()).toString();
+            const me = cache.readQuery<MeQuery, MeQueryVariables>({
+              query: MeDocument,
+            });
+            return {
+              __typename: "GroupMessage",
+              id: 0,
+              createdAt: now,
+              updatedAt: now,
+              creator: me.me,
+              message: (variables as WriteMessageMutationVariables).input
+                .message,
+            };
+          },
+        },
         updates: {
+          Subscription: {
+            newGroupMessage(result, args, cache, info) {
+              const group = cache.readFragment<
+                Group,
+                NewGroupMessageSubscriptionVariables
+              >(
+                gql`
+                  fragment __ on Group {
+                    id
+                    messages {
+                      id
+                      createdAt
+                      updatedAt
+                      creator {
+                        id
+                        username
+                        displayName
+                      }
+                      message
+                    }
+                  }
+                `,
+                {
+                  id: (args as NewGroupMessageSubscriptionVariables).groupId,
+                } as any
+              );
+
+              if (group) {
+                if (group.messages) {
+                  cache.writeFragment<Group>(
+                    gql`
+                      fragment __ on Group {
+                        id
+                        messages {
+                          id
+                          createdAt
+                          updatedAt
+                          creator {
+                            id
+                            username
+                            displayName
+                          }
+                          message
+                        }
+                      }
+                    `,
+                    {
+                      id: (args as NewGroupMessageSubscriptionVariables)
+                        .groupId,
+                      messages: [
+                        ...group.messages,
+                        (result as NewGroupMessageSubscription).newGroupMessage,
+                      ],
+                    } as any
+                  );
+                }
+              }
+            },
+          },
           Mutation: {
+            sendScheduleDates: (result, args, cache, info) => {
+              if (
+                (result as SendScheduleDatesMutation).sendScheduleDates.success
+              ) {
+                const me = cache.readQuery<MeQuery, MeQueryVariables>({
+                  query: MeDocument,
+                });
+
+                updateCacheQuery<
+                  SendScheduleDatesMutation,
+                  GetScheduleDatesQuery
+                >(
+                  cache,
+                  {
+                    query: GetScheduleDatesDocument,
+                    variables: {
+                      input: {
+                        groupId: (args as SendScheduleDatesMutationVariables)
+                          .input.groupId,
+                        startDate: startOfWeek(
+                          (args as SendScheduleDatesMutationVariables).input.add
+                            .length
+                            ? (args as SendScheduleDatesMutationVariables).input
+                                .add[0]
+                            : (args as SendScheduleDatesMutationVariables).input
+                                .remove[0]
+                        ),
+                      },
+                    },
+                  },
+                  result,
+                  (res, query) => {
+                    const scheduleDates = query.getScheduleDates;
+                    const scheduleDatesFiltered = scheduleDates.filter(
+                      (date1) =>
+                        !(
+                          args as SendScheduleDatesMutationVariables
+                        ).input.remove.some(
+                          (date2) =>
+                            date1.timestamp ===
+                            (date2 as Date).getTime().toString()
+                        )
+                    );
+
+                    return {
+                      getScheduleDates: [
+                        ...scheduleDatesFiltered,
+                        ...(
+                          args as SendScheduleDatesMutationVariables
+                        ).input.add.map((date) => ({
+                          __typename: "GroupSchedule" as const,
+                          timestamp: (date as Date).getTime().toString(),
+                          group_id: (args as SendScheduleDatesMutationVariables)
+                            .input.groupId,
+                          user_id: me?.me.id,
+                        })),
+                      ],
+                    };
+                  }
+                );
+              }
+            },
+            writeMessage: (result, args, cache, info) => {
+              const group = cache.readFragment<
+                Group,
+                WriteMessageMutationVariables
+              >(
+                gql`
+                  fragment __ on Group {
+                    id
+                    messages {
+                      id
+                      createdAt
+                      updatedAt
+                      creator {
+                        id
+                        username
+                        displayName
+                      }
+                      message
+                    }
+                  }
+                `,
+                {
+                  id: (args as WriteMessageMutationVariables).input.groupId,
+                } as any
+              );
+
+              if (group) {
+                if (group.messages) {
+                  cache.writeFragment<Group>(
+                    gql`
+                      fragment __ on Group {
+                        id
+                        messages {
+                          id
+                          createdAt
+                          updatedAt
+                          creator {
+                            id
+                            username
+                            displayName
+                          }
+                          message
+                        }
+                      }
+                    `,
+                    {
+                      id: (args as WriteMessageMutationVariables).input.groupId,
+                      messages: [
+                        ...group.messages,
+                        (result as WriteMessageMutation).writeMessage,
+                      ],
+                    } as any
+                  );
+                }
+              }
+            },
             disbandGroup: (result, args, cache, info) => {
               cache.invalidate({
                 __typename: "Group",
@@ -472,6 +700,11 @@ const CreateUrqlClient = (ssrExchange: any, ctx: any) => {
       errorExchange,
       ssrExchange,
       fetchExchange,
+      subscriptionExchange({
+        forwardSubscription: (operation) => {
+          return generateSubClient().request(operation);
+        },
+      }),
     ],
   };
 };

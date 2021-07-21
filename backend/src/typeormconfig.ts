@@ -11,6 +11,7 @@ import { GroupUser } from "./entities/GroupUser";
 import { Membership } from "./entities/Membership";
 import { Upvote } from "./entities/Upvote";
 import { Comment } from "./entities/Comment";
+import { GroupSchedule } from "./entities/GroupSchedule";
 
 export default {
   type: "postgres",
@@ -27,6 +28,7 @@ export default {
     GroupRequest,
     GroupMessage,
     GroupUser,
+    GroupSchedule,
     Membership,
     Module,
   ],

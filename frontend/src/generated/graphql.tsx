@@ -12,6 +12,8 @@ export type Scalars = {
   Boolean: boolean;
   Int: number;
   Float: number;
+  /** The javascript `Date` as string. Type represents date and time as the ISO Date string. */
+  DateTime: any;
 };
 
 export type Comment = {
@@ -40,10 +42,16 @@ export type CreatePostDetails = {
   module_id: Scalars['Float'];
 };
 
+
 export type FieldError = {
   __typename?: 'FieldError';
   field: Scalars['String'];
   message: Scalars['String'];
+};
+
+export type GetScheduleDatesInput = {
+  groupId: Scalars['Int'];
+  startDate: Scalars['DateTime'];
 };
 
 export type Group = {
@@ -64,6 +72,7 @@ export type Group = {
   members: Array<User>;
   requests: Array<User>;
   invite: Scalars['Boolean'];
+  messages: Array<GroupMessage>;
 };
 
 export type GroupCreationInput = {
@@ -82,10 +91,34 @@ export type GroupEditInput = {
   is_private: Scalars['Boolean'];
 };
 
+export type GroupMessage = {
+  __typename?: 'GroupMessage';
+  id: Scalars['Float'];
+  createdAt: Scalars['String'];
+  updatedAt: Scalars['String'];
+  creator_id: Scalars['Int'];
+  group_id: Scalars['Int'];
+  message: Scalars['String'];
+  creator: User;
+};
+
+export type GroupMessageInput = {
+  groupId: Scalars['Int'];
+  message: Scalars['String'];
+};
+
 export type GroupResponse = {
   __typename?: 'GroupResponse';
   errors?: Maybe<Array<FieldError>>;
   group?: Maybe<Group>;
+};
+
+export type GroupSchedule = {
+  __typename?: 'GroupSchedule';
+  user_id: Scalars['Int'];
+  group_id: Scalars['Int'];
+  timestamp: Scalars['String'];
+  availability?: Maybe<Scalars['Boolean']>;
 };
 
 export type InviteToGroupByIdInput = {
@@ -121,13 +154,6 @@ export type Mutation = {
   register: UserResponse;
   login: UserResponse;
   logout: Scalars['Boolean'];
-  vote: Scalars['Boolean'];
-  createPost: Post;
-  updatePost?: Maybe<Post>;
-  deletePost: Scalars['Boolean'];
-  createComment: Comment;
-  deleteComment: Scalars['Int'];
-  updateComment?: Maybe<Comment>;
   disbandGroup: Status;
   leaveGroup: Status;
   replyRequest: Status;
@@ -137,6 +163,15 @@ export type Mutation = {
   inviteToGroupById: Status;
   editGroup: Status;
   createGroup: GroupResponse;
+  writeMessage: GroupMessage;
+  sendScheduleDates: Status;
+  vote: Scalars['Boolean'];
+  createPost: Post;
+  updatePost?: Maybe<Post>;
+  deletePost: Scalars['Boolean'];
+  createComment: Comment;
+  deleteComment: Scalars['Int'];
+  updateComment?: Maybe<Comment>;
   editMode?: Maybe<Comment>;
   voteComment: Scalars['Boolean'];
 };
@@ -185,47 +220,6 @@ export type MutationLoginArgs = {
 };
 
 
-export type MutationVoteArgs = {
-  value: Scalars['Int'];
-  postId: Scalars['Int'];
-};
-
-
-export type MutationCreatePostArgs = {
-  details: CreatePostDetails;
-};
-
-
-export type MutationUpdatePostArgs = {
-  content: Scalars['String'];
-  title?: Maybe<Scalars['String']>;
-  id: Scalars['Int'];
-};
-
-
-export type MutationDeletePostArgs = {
-  id: Scalars['Int'];
-};
-
-
-export type MutationCreateCommentArgs = {
-  input: CreateCommentDetails;
-};
-
-
-export type MutationDeleteCommentArgs = {
-  commentId: Scalars['Int'];
-  postId: Scalars['Int'];
-};
-
-
-export type MutationUpdateCommentArgs = {
-  content: Scalars['String'];
-  commentId: Scalars['Int'];
-  postId: Scalars['Int'];
-};
-
-
 export type MutationDisbandGroupArgs = {
   groupId: Scalars['Int'];
 };
@@ -271,6 +265,57 @@ export type MutationCreateGroupArgs = {
 };
 
 
+export type MutationWriteMessageArgs = {
+  input: GroupMessageInput;
+};
+
+
+export type MutationSendScheduleDatesArgs = {
+  input: SendScheduleDatesInput;
+};
+
+
+export type MutationVoteArgs = {
+  value: Scalars['Int'];
+  postId: Scalars['Int'];
+};
+
+
+export type MutationCreatePostArgs = {
+  details: CreatePostDetails;
+};
+
+
+export type MutationUpdatePostArgs = {
+  content: Scalars['String'];
+  title?: Maybe<Scalars['String']>;
+  id: Scalars['Int'];
+};
+
+
+export type MutationDeletePostArgs = {
+  id: Scalars['Int'];
+};
+
+
+export type MutationCreateCommentArgs = {
+  input: CreateCommentDetails;
+};
+
+
+export type MutationDeleteCommentArgs = {
+  commentId: Scalars['Int'];
+  postId: Scalars['Int'];
+};
+
+
+export type MutationUpdateCommentArgs = {
+  content: Scalars['String'];
+  commentId: Scalars['Int'];
+  postId: Scalars['Int'];
+};
+
+
 export type MutationEditModeArgs = {
   commentId: Scalars['Int'];
   postId: Scalars['Int'];
@@ -313,21 +358,42 @@ export type PostCommentsArgs = {
 
 export type Query = {
   __typename?: 'Query';
-  hey: Scalars['String'];
   me?: Maybe<User>;
   user?: Maybe<User>;
-  posts: PaginatedPosts;
-  post?: Maybe<Post>;
   group?: Maybe<Group>;
   myGroups: Array<Group>;
   groups: Array<Group>;
+  getScheduleDates: Array<GroupSchedule>;
+  hey: Scalars['String'];
   modules: Array<Module>;
+  posts: PaginatedPosts;
+  post?: Maybe<Post>;
   comment?: Maybe<Comment>;
 };
 
 
 export type QueryUserArgs = {
   userId: Scalars['Int'];
+};
+
+
+export type QueryGroupArgs = {
+  slug: Scalars['String'];
+};
+
+
+export type QueryMyGroupsArgs = {
+  moduleId: Scalars['Int'];
+};
+
+
+export type QueryGroupsArgs = {
+  moduleId: Scalars['Int'];
+};
+
+
+export type QueryGetScheduleDatesArgs = {
+  input: GetScheduleDatesInput;
 };
 
 
@@ -340,16 +406,6 @@ export type QueryPostsArgs = {
 
 export type QueryPostArgs = {
   id: Scalars['Int'];
-};
-
-
-export type QueryGroupArgs = {
-  slug: Scalars['String'];
-};
-
-
-export type QueryGroupsArgs = {
-  moduleId: Scalars['Int'];
 };
 
 
@@ -380,10 +436,26 @@ export type ResetPasswordInput = {
   password: Scalars['String'];
 };
 
+export type SendScheduleDatesInput = {
+  groupId: Scalars['Int'];
+  remove: Array<Scalars['DateTime']>;
+  add: Array<Scalars['DateTime']>;
+};
+
 export type Status = {
   __typename?: 'Status';
   message: Scalars['String'];
   success: Scalars['Boolean'];
+};
+
+export type Subscription = {
+  __typename?: 'Subscription';
+  newGroupMessage: GroupMessage;
+};
+
+
+export type SubscriptionNewGroupMessageArgs = {
+  groupId: Scalars['Int'];
 };
 
 export type User = {
@@ -710,6 +782,19 @@ export type ResetPasswordMutation = (
   ) }
 );
 
+export type SendScheduleDatesMutationVariables = Exact<{
+  input: SendScheduleDatesInput;
+}>;
+
+
+export type SendScheduleDatesMutation = (
+  { __typename?: 'Mutation' }
+  & { sendScheduleDates: (
+    { __typename?: 'Status' }
+    & Pick<Status, 'message' | 'success'>
+  ) }
+);
+
 export type ToggleEditMutationVariables = Exact<{
   userId: Scalars['Int'];
 }>;
@@ -802,6 +887,36 @@ export type VoteCommentMutation = (
   & Pick<Mutation, 'voteComment'>
 );
 
+export type WriteMessageMutationVariables = Exact<{
+  input: GroupMessageInput;
+}>;
+
+
+export type WriteMessageMutation = (
+  { __typename?: 'Mutation' }
+  & { writeMessage: (
+    { __typename?: 'GroupMessage' }
+    & Pick<GroupMessage, 'id' | 'createdAt' | 'updatedAt' | 'message'>
+    & { creator: (
+      { __typename?: 'User' }
+      & UserDetailsFragment
+    ) }
+  ) }
+);
+
+export type GetScheduleDatesQueryVariables = Exact<{
+  input: GetScheduleDatesInput;
+}>;
+
+
+export type GetScheduleDatesQuery = (
+  { __typename?: 'Query' }
+  & { getScheduleDates: Array<(
+    { __typename?: 'GroupSchedule' }
+    & Pick<GroupSchedule, 'user_id' | 'group_id' | 'timestamp'>
+  )> }
+);
+
 export type GroupQueryVariables = Exact<{
   slug: Scalars['String'];
 }>;
@@ -821,6 +936,13 @@ export type GroupQuery = (
     )>, members: Array<(
       { __typename?: 'User' }
       & UserDetailsFragment
+    )>, messages: Array<(
+      { __typename?: 'GroupMessage' }
+      & Pick<GroupMessage, 'id' | 'createdAt' | 'updatedAt' | 'message'>
+      & { creator: (
+        { __typename?: 'User' }
+        & UserDetailsFragment
+      ) }
     )> }
   )> }
 );
@@ -861,6 +983,23 @@ export type ModulesQuery = (
   & { modules: Array<(
     { __typename?: 'Module' }
     & Pick<Module, 'id' | 'code' | 'name'>
+  )> }
+);
+
+export type MyGroupsQueryVariables = Exact<{
+  moduleId: Scalars['Int'];
+}>;
+
+
+export type MyGroupsQuery = (
+  { __typename?: 'Query' }
+  & { myGroups: Array<(
+    { __typename?: 'Group' }
+    & Pick<Group, 'id' | 'name' | 'description' | 'requirements' | 'slug' | 'isMember' | 'isLeader'>
+    & { module?: Maybe<(
+      { __typename?: 'Module' }
+      & Pick<Module, 'id' | 'name' | 'code'>
+    )> }
   )> }
 );
 
@@ -918,6 +1057,23 @@ export type UserQuery = (
     { __typename?: 'User' }
     & Pick<User, 'displayName' | 'username' | 'editMode' | 'isVerified' | 'id' | 'description' | 'email'>
   )> }
+);
+
+export type NewGroupMessageSubscriptionVariables = Exact<{
+  groupId: Scalars['Int'];
+}>;
+
+
+export type NewGroupMessageSubscription = (
+  { __typename?: 'Subscription' }
+  & { newGroupMessage: (
+    { __typename?: 'GroupMessage' }
+    & Pick<GroupMessage, 'id' | 'createdAt' | 'updatedAt' | 'message'>
+    & { creator: (
+      { __typename?: 'User' }
+      & UserDetailsFragment
+    ) }
+  ) }
 );
 
 export const CommentSnippetFragmentDoc = gql`
@@ -1221,6 +1377,18 @@ ${UserDetailsFragmentDoc}`;
 export function useResetPasswordMutation() {
   return Urql.useMutation<ResetPasswordMutation, ResetPasswordMutationVariables>(ResetPasswordDocument);
 };
+export const SendScheduleDatesDocument = gql`
+    mutation SendScheduleDates($input: SendScheduleDatesInput!) {
+  sendScheduleDates(input: $input) {
+    message
+    success
+  }
+}
+    `;
+
+export function useSendScheduleDatesMutation() {
+  return Urql.useMutation<SendScheduleDatesMutation, SendScheduleDatesMutationVariables>(SendScheduleDatesDocument);
+};
 export const ToggleEditDocument = gql`
     mutation ToggleEdit($userId: Int!) {
   toggleEdit(userId: $userId)
@@ -1301,6 +1469,36 @@ export const VoteCommentDocument = gql`
 export function useVoteCommentMutation() {
   return Urql.useMutation<VoteCommentMutation, VoteCommentMutationVariables>(VoteCommentDocument);
 };
+export const WriteMessageDocument = gql`
+    mutation WriteMessage($input: GroupMessageInput!) {
+  writeMessage(input: $input) {
+    id
+    createdAt
+    updatedAt
+    creator {
+      ...UserDetails
+    }
+    message
+  }
+}
+    ${UserDetailsFragmentDoc}`;
+
+export function useWriteMessageMutation() {
+  return Urql.useMutation<WriteMessageMutation, WriteMessageMutationVariables>(WriteMessageDocument);
+};
+export const GetScheduleDatesDocument = gql`
+    query GetScheduleDates($input: GetScheduleDatesInput!) {
+  getScheduleDates(input: $input) {
+    user_id
+    group_id
+    timestamp
+  }
+}
+    `;
+
+export function useGetScheduleDatesQuery(options: Omit<Urql.UseQueryArgs<GetScheduleDatesQueryVariables>, 'query'> = {}) {
+  return Urql.useQuery<GetScheduleDatesQuery>({ query: GetScheduleDatesDocument, ...options });
+};
 export const GroupDocument = gql`
     query Group($slug: String!) {
   group(slug: $slug) {
@@ -1323,6 +1521,15 @@ export const GroupDocument = gql`
     }
     members {
       ...UserDetails
+    }
+    messages {
+      id
+      createdAt
+      updatedAt
+      creator {
+        ...UserDetails
+      }
+      message
     }
   }
 }
@@ -1376,6 +1583,28 @@ export const ModulesDocument = gql`
 
 export function useModulesQuery(options: Omit<Urql.UseQueryArgs<ModulesQueryVariables>, 'query'> = {}) {
   return Urql.useQuery<ModulesQuery>({ query: ModulesDocument, ...options });
+};
+export const MyGroupsDocument = gql`
+    query MyGroups($moduleId: Int!) {
+  myGroups(moduleId: $moduleId) {
+    id
+    name
+    description
+    requirements
+    slug
+    isMember
+    isLeader
+    module {
+      id
+      name
+      code
+    }
+  }
+}
+    `;
+
+export function useMyGroupsQuery(options: Omit<Urql.UseQueryArgs<MyGroupsQueryVariables>, 'query'> = {}) {
+  return Urql.useQuery<MyGroupsQuery>({ query: MyGroupsDocument, ...options });
 };
 export const PostDocument = gql`
     query Post($id: Int!) {
@@ -1445,4 +1674,21 @@ export const UserDocument = gql`
 
 export function useUserQuery(options: Omit<Urql.UseQueryArgs<UserQueryVariables>, 'query'> = {}) {
   return Urql.useQuery<UserQuery>({ query: UserDocument, ...options });
+};
+export const NewGroupMessageDocument = gql`
+    subscription NewGroupMessage($groupId: Int!) {
+  newGroupMessage(groupId: $groupId) {
+    id
+    createdAt
+    updatedAt
+    creator {
+      ...UserDetails
+    }
+    message
+  }
+}
+    ${UserDetailsFragmentDoc}`;
+
+export function useNewGroupMessageSubscription<TData = NewGroupMessageSubscription>(options: Omit<Urql.UseSubscriptionArgs<NewGroupMessageSubscriptionVariables>, 'query'> = {}, handler?: Urql.SubscriptionHandler<NewGroupMessageSubscription, TData>) {
+  return Urql.useSubscription<NewGroupMessageSubscription, TData, NewGroupMessageSubscriptionVariables>({ query: NewGroupMessageDocument, ...options }, handler);
 };
