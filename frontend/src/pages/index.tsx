@@ -92,7 +92,7 @@ const Index = () => {
         <Box mt={5}>
           <Button
             rel="noopener noreferrer"
-            href="https://forms.gle/aTP65LHmboyWeG1r7"
+            href="https://github.com/ngjunkang/classify/issues"
             target="_blank"
           >
             Report bugs here
