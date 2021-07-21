@@ -4,6 +4,7 @@ import {
   QueryInput,
   Resolver,
 } from "@urql/exchange-graphcache";
+import startOfWeek from "date-fns/startOfWeek";
 import gql from "graphql-tag";
 import Router from "next/router";
 import { SubscriptionClient } from "subscriptions-transport-ws";
@@ -19,6 +20,8 @@ import {
   DeletePostMutationVariables,
   DisbandGroupMutationVariables,
   EditGroupMutationVariables,
+  GetScheduleDatesDocument,
+  GetScheduleDatesQuery,
   Group,
   GroupMessage,
   LeaveGroupMutationVariables,
@@ -35,6 +38,8 @@ import {
   ReplyRequestMutation,
   ReplyRequestMutationVariables,
   ResetPasswordMutation,
+  SendScheduleDatesMutation,
+  SendScheduleDatesMutationVariables,
   UserDetailsFragment,
   VoteMutationVariables,
   WriteMessageMutation,
@@ -234,6 +239,68 @@ const CreateUrqlClient = (ssrExchange: any, ctx: any) => {
             },
           },
           Mutation: {
+            sendScheduleDates: (result, args, cache, info) => {
+              if (
+                (result as SendScheduleDatesMutation).sendScheduleDates.success
+              ) {
+                const me = cache.readQuery<MeQuery, MeQueryVariables>({
+                  query: MeDocument,
+                });
+
+                updateCacheQuery<
+                  SendScheduleDatesMutation,
+                  GetScheduleDatesQuery
+                >(
+                  cache,
+                  {
+                    query: GetScheduleDatesDocument,
+                    variables: {
+                      input: {
+                        groupId: (args as SendScheduleDatesMutationVariables)
+                          .input.groupId,
+                        startDate: startOfWeek(
+                          (args as SendScheduleDatesMutationVariables).input.add
+                            .length
+                            ? (args as SendScheduleDatesMutationVariables).input
+                                .add[0]
+                            : (args as SendScheduleDatesMutationVariables).input
+                                .remove[0]
+                        ),
+                      },
+                    },
+                  },
+                  result,
+                  (res, query) => {
+                    const scheduleDates = query.getScheduleDates;
+                    const scheduleDatesFiltered = scheduleDates.filter(
+                      (date1) =>
+                        !(
+                          args as SendScheduleDatesMutationVariables
+                        ).input.remove.some(
+                          (date2) =>
+                            date1.timestamp ===
+                            (date2 as Date).getTime().toString()
+                        )
+                    );
+
+                    return {
+                      getScheduleDates: [
+                        ...scheduleDatesFiltered,
+                        ...(
+                          args as SendScheduleDatesMutationVariables
+                        ).input.add.map((date) => ({
+                          __typename: "GroupSchedule" as const,
+                          timestamp: (date as Date).getTime().toString(),
+                          group_id: (args as SendScheduleDatesMutationVariables)
+                            .input.groupId,
+                          user_id: me?.me.id,
+                        })),
+                      ],
+                    };
+                  }
+                );
+              }
+            },
             writeMessage: (result, args, cache, info) => {
               const group = cache.readFragment<
                 Group,
