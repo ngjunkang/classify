@@ -1,17 +1,12 @@
 import { Box, Typography } from "@material-ui/core";
-import { Formik, Form } from "formik";
+import { Form, Formik } from "formik";
 import { withUrqlClient } from "next-urql";
-import router from "next/router";
 import React, { useState } from "react";
 import Layout from "../components/Layout";
 import LoadingButton from "../components/LoadingButton";
-import PasswordInputField from "../components/PasswordTextField";
 import StandardTextField from "../components/StandardTextField";
 import { useForgotPasswordMutation } from "../generated/graphql";
 import CreateUrqlClient from "../utils/CreateUrqlClient";
-import { mapError } from "../utils/mapError";
-import { validateLoginForm } from "../utils/validations";
-import login from "./login";
 
 interface ForgotPasswordProps {}
 
