@@ -248,6 +248,14 @@ const CreateUrqlClient = (ssrExchange: any, ctx: any) => {
           },
           Mutation: {
             sendScheduleDates: (result, args, cache, info) => {
+              const {
+                add,
+                remove,
+                groupId,
+              }: { add: Date[]; remove: Date[]; groupId: number } = (
+                args as SendScheduleDatesMutationVariables
+              ).input;
+
               if (
                 (result as SendScheduleDatesMutation).sendScheduleDates.success
               ) {
@@ -264,43 +272,33 @@ const CreateUrqlClient = (ssrExchange: any, ctx: any) => {
                     query: GetScheduleDatesDocument,
                     variables: {
                       input: {
-                        groupId: (args as SendScheduleDatesMutationVariables)
-                          .input.groupId,
-                        startDate: startOfWeek(
-                          (args as SendScheduleDatesMutationVariables).input.add
-                            .length
-                            ? (args as SendScheduleDatesMutationVariables).input
-                                .add[0]
-                            : (args as SendScheduleDatesMutationVariables).input
-                                .remove[0]
-                        ),
+                        groupId: groupId,
+                        startDate: startOfWeek(add.length ? add[0] : remove[0]),
                       },
                     },
                   },
                   result,
                   (res, query) => {
+                    if (!res.sendScheduleDates?.success) {
+                      return query;
+                    }
+
                     const scheduleDates = query.getScheduleDates;
                     const scheduleDatesFiltered = scheduleDates.filter(
                       (date1) =>
-                        !(
-                          args as SendScheduleDatesMutationVariables
-                        ).input.remove.some(
+                        !remove.some(
                           (date2) =>
-                            date1.timestamp ===
-                            (date2 as Date).getTime().toString()
+                            date1.timestamp === date2.getTime().toString()
                         )
                     );
 
                     return {
                       getScheduleDates: [
                         ...scheduleDatesFiltered,
-                        ...(
-                          args as SendScheduleDatesMutationVariables
-                        ).input.add.map((date) => ({
+                        ...add.map((date) => ({
                           __typename: "GroupSchedule" as const,
                           timestamp: (date as Date).getTime().toString(),
-                          group_id: (args as SendScheduleDatesMutationVariables)
-                            .input.groupId,
+                          group_id: groupId,
                           user_id: me?.me.id,
                         })),
                       ],
