@@ -35,11 +35,13 @@ const useStyles = makeStyles((theme: Theme) =>
 interface PasswordInputProps {
   label: string;
   labelWidth: number;
+  autoComplete: "on" | "off" | "current-password" | "new-password";
 }
 
 const PasswordInputField: React.FC<FieldAttributes<PasswordInputProps>> = ({
   labelWidth,
   label,
+  autoComplete,
   ...props
 }) => {
   const [field, meta] = useField<{}>(props);
@@ -74,6 +76,7 @@ const PasswordInputField: React.FC<FieldAttributes<PasswordInputProps>> = ({
           type={showPassword ? "text" : "password"}
           {...field}
           required
+          autoComplete={autoComplete}
           endAdornment={
             <InputAdornment position="end">
               <IconButton

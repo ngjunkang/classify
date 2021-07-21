@@ -73,11 +73,13 @@ const ResetPassword: NextPage = () => {
               labelWidth={80}
               label="Password"
               name="password"
+              autoComplete="new-password"
             />
             <PasswordInputField
               labelWidth={140}
               label="Confirm Password"
               name="confirmPassword"
+              autoComplete="new-password"
             />
             {tokenError && (
               <Box className={styles.sameLine}>

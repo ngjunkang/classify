@@ -59,6 +59,7 @@ const login: React.FC<loginProps> = ({}) => {
               labelWidth={80}
               label="Password"
               name="password"
+              autoComplete="current-password"
             />
             <Box mt={1} style={{ display: "flex" }}>
               <Box style={{ flexGrow: 1 }}>
