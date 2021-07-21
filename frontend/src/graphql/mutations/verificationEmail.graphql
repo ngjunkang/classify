@@ -1,0 +1,3 @@
+mutation VerificationEmail($userId: Int!) {
+  verificationEmail(userId: $userId)
+}

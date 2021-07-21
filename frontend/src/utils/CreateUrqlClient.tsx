@@ -19,6 +19,7 @@ import {
   DisbandGroupMutationVariables,
   EditGroupMutationVariables,
   EditModeMutationVariables,
+  EditUserMutation,
   GroupDocument,
   GroupQuery,
   LeaveGroupMutationVariables,
@@ -32,6 +33,7 @@ import {
   ReplyRequestMutation,
   ReplyRequestMutationVariables,
   ResetPasswordMutation,
+  ToggleEditMutationVariables,
   useGroupQuery,
   User,
   UserDetailsFragment,
@@ -398,6 +400,12 @@ const CreateUrqlClient = (ssrExchange: any, ctx: any) => {
               cache.invalidate({
                 __typename: "Post",
                 id: postId,
+              });
+            },
+            toggleEdit: (result, args, cache, info) => {
+              cache.invalidate({
+                __typename: "User",
+                id: (args as ToggleEditMutationVariables).userId,
               });
             },
             resetPassword: (result, args, cache, info) => {

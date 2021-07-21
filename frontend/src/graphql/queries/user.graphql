@@ -1,0 +1,12 @@
+query User($userId: Int!) {
+  user(userId: $userId) {
+    displayName
+    username
+    editMode
+    isVerified
+    id
+    description
+    email
+    editMode
+  }
+}

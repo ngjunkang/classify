@@ -1,0 +1,3 @@
+mutation ToggleEdit($userId: Int!) {
+  toggleEdit(userId: $userId)
+}

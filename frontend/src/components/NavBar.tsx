@@ -24,6 +24,7 @@ import { useMeQuery, useLogoutMutation } from "../generated/graphql";
 import isServer from "../utils/isServer";
 import NextLink from "next/link";
 import SideBar from "./SideBar";
+import { useRouter } from "next/router";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -99,6 +100,7 @@ interface NavBarProps {}
 
 const NavBar: React.FC<NavBarProps> = () => {
   const classes = useStyles();
+  const router = useRouter();
   const [{ data, fetching }] = useMeQuery({
     pause: isServer(),
   });
@@ -106,23 +108,26 @@ const NavBar: React.FC<NavBarProps> = () => {
   const [, logout] = useLogoutMutation();
 
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const [mobileMoreAnchorEl, setMobileMoreAnchorEl] =
-    React.useState<null | HTMLElement>(null);
+  const [
+    mobileMoreAnchorEl,
+    setMobileMoreAnchorEl,
+  ] = React.useState<null | HTMLElement>(null);
 
   const [open, setOpen] = React.useState(false);
 
-  const toggleDrawer =
-    (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
-      if (
-        event.type === "keydown" &&
-        ((event as React.KeyboardEvent).key === "Tab" ||
-          (event as React.KeyboardEvent).key === "Shift")
-      ) {
-        return;
-      }
+  const toggleDrawer = (open: boolean) => (
+    event: React.KeyboardEvent | React.MouseEvent
+  ) => {
+    if (
+      event.type === "keydown" &&
+      ((event as React.KeyboardEvent).key === "Tab" ||
+        (event as React.KeyboardEvent).key === "Shift")
+    ) {
+      return;
+    }
 
-      setOpen(open);
-    };
+    setOpen(open);
+  };
 
   const isMenuOpen = Boolean(anchorEl);
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
@@ -155,8 +160,14 @@ const NavBar: React.FC<NavBarProps> = () => {
       open={isMenuOpen}
       onClose={handleMenuClose}
     >
-      <MenuItem onClick={handleMenuClose}>Profile</MenuItem>
-      <MenuItem onClick={handleMenuClose}>My account</MenuItem>
+      <MenuItem
+        onClick={() => {
+          handleMenuClose();
+          router.push(`/profile/${data.me.id}`);
+        }}
+      >
+        My profile
+      </MenuItem>
       <MenuItem
         onClick={() => {
           handleMenuClose();

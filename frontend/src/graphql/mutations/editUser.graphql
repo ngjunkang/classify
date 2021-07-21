@@ -1,0 +1,20 @@
+mutation EditUser(
+  $displayName: String!
+  $description: String!
+  $email: String!
+  $userId: Int!
+) {
+  editUser(
+    displayName: $displayName
+    description: $description
+    email: $email
+    userId: $userId
+  ) {
+    errors {
+      ...ErrorDetails
+    }
+    user {
+      id
+    }
+  }
+}

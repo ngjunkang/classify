@@ -1,0 +1,10 @@
+mutation VerifyEmail($token: String!) {
+  verifyEmail(token: $token) {
+    errors {
+      ...ErrorDetails
+    }
+    user {
+      ...UserDetails
+    }
+  }
+}

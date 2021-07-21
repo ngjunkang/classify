@@ -4,26 +4,21 @@ import {
   Collapse,
   Divider,
   IconButton,
+  Link,
   Paper,
   Theme,
   Typography,
 } from "@material-ui/core";
 import { lightBlue } from "@material-ui/core/colors";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
-import {
-  Delete,
-  Edit,
-  ExpandMore,
-  KeyboardArrowDown,
-  KeyboardArrowUp,
-} from "@material-ui/icons";
+import { Delete, Edit, ExpandMore } from "@material-ui/icons";
 import clsx from "clsx";
 import { Form, Formik } from "formik";
-import { resetCaches } from "graphql-tag";
 import { withUrqlClient } from "next-urql";
 import { useRouter } from "next/router";
 import React, { useState } from "react";
 import { CommentUpvote } from "../../components/CommentUpvote";
+import NextLink from "next/link";
 import Layout from "../../components/Layout";
 import LoadingButton from "../../components/LoadingButton";
 import TextAreaField from "../../components/TextAreaField";
@@ -38,7 +33,6 @@ import {
 import CreateUrqlClient from "../../utils/CreateUrqlClient";
 import isServer from "../../utils/isServer";
 import { postFromUrl } from "../../utils/postFromUrl";
-import { validateResetPasswordForm } from "../../utils/validations";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -62,22 +56,24 @@ const useStyles = makeStyles((theme: Theme) =>
       color: "grey",
     },
     flexGrow: {
+      marginTop: 10,
       flexGrow: 1,
       display: "flex",
       flexDirection: "row",
     },
     flexGrowContent: {
       flexGrow: 1,
-      padding: 15,
+      padding: 10,
     },
     flexGrowComment: {
       flexGrow: 1,
-      paddingLeft: 15,
+      paddingLeft: 10,
       paddingTop: 5,
     },
     flexRowComment: {
       display: "flex",
       flexDirection: "row",
+      alignItems: "center",
     },
     flexBoxRow: {
       margin: 2,
@@ -89,6 +85,16 @@ const useStyles = makeStyles((theme: Theme) =>
       flexGrow: 1,
       display: "flex",
       flexDirection: "row",
+    },
+    authorText: {
+      display: "flex",
+      flexDirection: "row",
+      marginTop: 5,
+    },
+    authorSpacing: {
+      marginTop: 5,
+      marginLeft: 5,
+      marginRight: 5,
     },
     button: {
       color: lightBlue[500],
@@ -125,6 +131,13 @@ const Post = ({}) => {
   const [, updateComment] = useUpdateCommentMutation();
   const [, deleteComment] = useDeleteCommentMutation();
   const postDate = data?.post?.updatedAt;
+  const author = (
+    <NextLink href="/profile/[id]" as={`/profile/${data?.post?.creator?.id}`}>
+      <Link>
+        <h3>{data?.post?.creator.username}</h3>
+      </Link>
+    </NextLink>
+  );
   const [{ data: me }] = useMeQuery({
     pause: isServer(),
   });
@@ -168,13 +181,24 @@ const Post = ({}) => {
             <Typography variant="h4" color="primary">
               {data?.post?.title}
             </Typography>
-            <text>
-              {data?.post?.creator
-                ? `by ${
-                    data?.post?.creator.username
-                  } at ${timeStampStringToString(postDate)}`
-                : null}
-            </text>
+            <Box className={styles.flexRowComment}>
+              <Typography className={styles.authorText} variant="body2">
+                by
+              </Typography>
+              <NextLink
+                href="/profile/[id]"
+                as={`/profile/${data?.post?.creator?.id}`}
+              >
+                <Link className={styles.authorSpacing}>
+                  <Typography variant="body2">
+                    {data?.post?.creator.username}
+                  </Typography>
+                </Link>
+              </NextLink>
+              <Typography className={styles.authorText} variant="body2">
+                at {timeStampStringToString(postDate)}
+              </Typography>
+            </Box>
           </Box>
           <Box className={styles.flexGrowContent}>
             <Typography variant="body1">{data?.post?.content}</Typography>
@@ -237,13 +261,16 @@ const Post = ({}) => {
                             className={styles.flexGrowComment}
                           >
                             <Box className={styles.flexRowComment}>
-                              <Typography
-                                className={styles.textSpacing}
-                                variant="body2"
-                                color="primary"
+                              <NextLink
+                                href="/profile/[id]"
+                                as={`/profile/${data?.post?.creator?.id}`}
                               >
-                                {c.creator.displayName}
-                              </Typography>
+                                <Link>
+                                  <Typography variant="body2" color="initial">
+                                    {c.creator.displayName}
+                                  </Typography>
+                                </Link>
+                              </NextLink>
                               <Typography
                                 className={styles.titleSpacing}
                                 variant="body2"
@@ -252,7 +279,12 @@ const Post = ({}) => {
                                 at {timeStampStringToString(c.updatedAt)}
                               </Typography>
                             </Box>
-                            <Typography variant="body1">{c.content}</Typography>
+                            <Typography
+                              className={styles.voteSpacing}
+                              variant="body1"
+                            >
+                              {c.content}
+                            </Typography>
                           </Box>
                         )}
                         {c.editMode || me?.me?.id !== c.creatorId ? null : (

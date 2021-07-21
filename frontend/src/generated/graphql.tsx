@@ -112,8 +112,12 @@ export type Module = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  editUser: UserResponse;
+  toggleEdit: Scalars['Boolean'];
   resetPassword: UserResponse;
   forgotPassword: Scalars['Boolean'];
+  verifyEmail: UserResponse;
+  verificationEmail: Scalars['Boolean'];
   register: UserResponse;
   login: UserResponse;
   logout: Scalars['Boolean'];
@@ -138,6 +142,19 @@ export type Mutation = {
 };
 
 
+export type MutationEditUserArgs = {
+  displayName: Scalars['String'];
+  description: Scalars['String'];
+  email: Scalars['String'];
+  userId: Scalars['Int'];
+};
+
+
+export type MutationToggleEditArgs = {
+  userId: Scalars['Int'];
+};
+
+
 export type MutationResetPasswordArgs = {
   data: ResetPasswordInput;
 };
@@ -145,6 +162,16 @@ export type MutationResetPasswordArgs = {
 
 export type MutationForgotPasswordArgs = {
   email: Scalars['String'];
+};
+
+
+export type MutationVerifyEmailArgs = {
+  token: Scalars['String'];
+};
+
+
+export type MutationVerificationEmailArgs = {
+  userId: Scalars['Int'];
 };
 
 
@@ -288,6 +315,7 @@ export type Query = {
   __typename?: 'Query';
   hey: Scalars['String'];
   me?: Maybe<User>;
+  user?: Maybe<User>;
   posts: PaginatedPosts;
   post?: Maybe<Post>;
   group?: Maybe<Group>;
@@ -295,6 +323,11 @@ export type Query = {
   groups: Array<Group>;
   modules: Array<Module>;
   comment?: Maybe<Comment>;
+};
+
+
+export type QueryUserArgs = {
+  userId: Scalars['Int'];
 };
 
 
@@ -356,8 +389,11 @@ export type Status = {
 export type User = {
   __typename?: 'User';
   id: Scalars['Float'];
+  editMode: Scalars['Boolean'];
+  isVerified: Scalars['Boolean'];
   createdAt: Scalars['String'];
   updatedAt: Scalars['String'];
+  description?: Maybe<Scalars['String']>;
   email: Scalars['String'];
   username: Scalars['String'];
   displayName: Scalars['String'];
@@ -507,6 +543,28 @@ export type EditModeMutation = (
   )> }
 );
 
+export type EditUserMutationVariables = Exact<{
+  displayName: Scalars['String'];
+  description: Scalars['String'];
+  email: Scalars['String'];
+  userId: Scalars['Int'];
+}>;
+
+
+export type EditUserMutation = (
+  { __typename?: 'Mutation' }
+  & { editUser: (
+    { __typename?: 'UserResponse' }
+    & { errors?: Maybe<Array<(
+      { __typename?: 'FieldError' }
+      & ErrorDetailsFragment
+    )>>, user?: Maybe<(
+      { __typename?: 'User' }
+      & Pick<User, 'id'>
+    )> }
+  ) }
+);
+
 export type ForgotPasswordMutationVariables = Exact<{
   email: Scalars['String'];
 }>;
@@ -652,6 +710,16 @@ export type ResetPasswordMutation = (
   ) }
 );
 
+export type ToggleEditMutationVariables = Exact<{
+  userId: Scalars['Int'];
+}>;
+
+
+export type ToggleEditMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'toggleEdit'>
+);
+
 export type UpdateCommentMutationVariables = Exact<{
   postId: Scalars['Int'];
   commentId: Scalars['Int'];
@@ -680,6 +748,35 @@ export type UpdatePostMutation = (
     { __typename?: 'Post' }
     & Pick<Post, 'id' | 'title' | 'content' | 'textSnippet'>
   )> }
+);
+
+export type VerificationEmailMutationVariables = Exact<{
+  userId: Scalars['Int'];
+}>;
+
+
+export type VerificationEmailMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'verificationEmail'>
+);
+
+export type VerifyEmailMutationVariables = Exact<{
+  token: Scalars['String'];
+}>;
+
+
+export type VerifyEmailMutation = (
+  { __typename?: 'Mutation' }
+  & { verifyEmail: (
+    { __typename?: 'UserResponse' }
+    & { errors?: Maybe<Array<(
+      { __typename?: 'FieldError' }
+      & ErrorDetailsFragment
+    )>>, user?: Maybe<(
+      { __typename?: 'User' }
+      & UserDetailsFragment
+    )> }
+  ) }
 );
 
 export type VoteMutationVariables = Exact<{
@@ -808,6 +905,19 @@ export type PostsQuery = (
       & PostSnippetFragment
     )> }
   ) }
+);
+
+export type UserQueryVariables = Exact<{
+  userId: Scalars['Int'];
+}>;
+
+
+export type UserQuery = (
+  { __typename?: 'Query' }
+  & { user?: Maybe<(
+    { __typename?: 'User' }
+    & Pick<User, 'displayName' | 'username' | 'editMode' | 'isVerified' | 'id' | 'description' | 'email'>
+  )> }
 );
 
 export const CommentSnippetFragmentDoc = gql`
@@ -964,6 +1074,27 @@ export const EditModeDocument = gql`
 export function useEditModeMutation() {
   return Urql.useMutation<EditModeMutation, EditModeMutationVariables>(EditModeDocument);
 };
+export const EditUserDocument = gql`
+    mutation EditUser($displayName: String!, $description: String!, $email: String!, $userId: Int!) {
+  editUser(
+    displayName: $displayName
+    description: $description
+    email: $email
+    userId: $userId
+  ) {
+    errors {
+      ...ErrorDetails
+    }
+    user {
+      id
+    }
+  }
+}
+    ${ErrorDetailsFragmentDoc}`;
+
+export function useEditUserMutation() {
+  return Urql.useMutation<EditUserMutation, EditUserMutationVariables>(EditUserDocument);
+};
 export const ForgotPasswordDocument = gql`
     mutation ForgotPassword($email: String!) {
   forgotPassword(email: $email)
@@ -1090,6 +1221,15 @@ ${UserDetailsFragmentDoc}`;
 export function useResetPasswordMutation() {
   return Urql.useMutation<ResetPasswordMutation, ResetPasswordMutationVariables>(ResetPasswordDocument);
 };
+export const ToggleEditDocument = gql`
+    mutation ToggleEdit($userId: Int!) {
+  toggleEdit(userId: $userId)
+}
+    `;
+
+export function useToggleEditMutation() {
+  return Urql.useMutation<ToggleEditMutation, ToggleEditMutationVariables>(ToggleEditDocument);
+};
 export const UpdateCommentDocument = gql`
     mutation UpdateComment($postId: Int!, $commentId: Int!, $content: String!) {
   updateComment(postId: $postId, commentId: $commentId, content: $content) {
@@ -1116,6 +1256,32 @@ export const UpdatePostDocument = gql`
 
 export function useUpdatePostMutation() {
   return Urql.useMutation<UpdatePostMutation, UpdatePostMutationVariables>(UpdatePostDocument);
+};
+export const VerificationEmailDocument = gql`
+    mutation VerificationEmail($userId: Int!) {
+  verificationEmail(userId: $userId)
+}
+    `;
+
+export function useVerificationEmailMutation() {
+  return Urql.useMutation<VerificationEmailMutation, VerificationEmailMutationVariables>(VerificationEmailDocument);
+};
+export const VerifyEmailDocument = gql`
+    mutation VerifyEmail($token: String!) {
+  verifyEmail(token: $token) {
+    errors {
+      ...ErrorDetails
+    }
+    user {
+      ...UserDetails
+    }
+  }
+}
+    ${ErrorDetailsFragmentDoc}
+${UserDetailsFragmentDoc}`;
+
+export function useVerifyEmailMutation() {
+  return Urql.useMutation<VerifyEmailMutation, VerifyEmailMutationVariables>(VerifyEmailDocument);
 };
 export const VoteDocument = gql`
     mutation Vote($value: Int!, $postId: Int!) {
@@ -1261,4 +1427,22 @@ export const PostsDocument = gql`
 
 export function usePostsQuery(options: Omit<Urql.UseQueryArgs<PostsQueryVariables>, 'query'> = {}) {
   return Urql.useQuery<PostsQuery>({ query: PostsDocument, ...options });
+};
+export const UserDocument = gql`
+    query User($userId: Int!) {
+  user(userId: $userId) {
+    displayName
+    username
+    editMode
+    isVerified
+    id
+    description
+    email
+    editMode
+  }
+}
+    `;
+
+export function useUserQuery(options: Omit<Urql.UseQueryArgs<UserQueryVariables>, 'query'> = {}) {
+  return Urql.useQuery<UserQuery>({ query: UserDocument, ...options });
 };
