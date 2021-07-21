@@ -577,8 +577,29 @@ export class GroupResolver {
   }
 
   @Query(() => [Group])
-  myGroups(@Ctx() { req }: ThisContext): Promise<Group[]> {
-    return Group.find({ creator_id: req.session.userId });
+  @UseMiddleware(isAuth)
+  async myGroups(
+    @Arg("moduleId", () => Int) moduleId: number,
+    @Ctx() { req }: ThisContext
+  ): Promise<Group[]> {
+    const memberships = await Membership.find({
+      user_id: req.session.userId,
+    });
+
+    const groupIds = memberships.map((membership) => membership.group_id);
+
+    const qb = getRepository(Group)
+      .createQueryBuilder("group")
+      .andWhereInIds(groupIds)
+      .orderBy("group.createdAt", "DESC");
+
+    if (!moduleId) {
+      return qb.getMany();
+    } else {
+      return qb
+        .andWhere("group.module_id = :moduleId", { moduleId: moduleId })
+        .getMany();
+    }
   }
 
   @Query(() => [Group])
@@ -672,7 +693,7 @@ export class GroupResolver {
       group_id: groupId,
       user_id: req.session.userId,
       timestamp: date,
-      availability: undefined,
+      availability: null,
     }));
 
     const addedDates = add.map((date) => ({
@@ -712,6 +733,7 @@ export class GroupResolver {
       .createQueryBuilder("schedule")
       .where("schedule.timestamp >= :startDate", { startDate })
       .andWhere("schedule.timestamp < :endDate", { endDate })
+      .andWhere("schedule.availability = TRUE")
       .getMany();
   }
 }
