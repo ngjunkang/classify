@@ -283,6 +283,11 @@ export type QueryGroupArgs = {
 };
 
 
+export type QueryMyGroupsArgs = {
+  moduleId: Scalars['Int'];
+};
+
+
 export type QueryGroupsArgs = {
   moduleId: Scalars['Int'];
 };
@@ -739,6 +744,23 @@ export type ModulesQuery = (
   )> }
 );
 
+export type MyGroupsQueryVariables = Exact<{
+  moduleId: Scalars['Int'];
+}>;
+
+
+export type MyGroupsQuery = (
+  { __typename?: 'Query' }
+  & { myGroups: Array<(
+    { __typename?: 'Group' }
+    & Pick<Group, 'id' | 'name' | 'description' | 'requirements' | 'slug' | 'isMember' | 'isLeader'>
+    & { module?: Maybe<(
+      { __typename?: 'Module' }
+      & Pick<Module, 'id' | 'name' | 'code'>
+    )> }
+  )> }
+);
+
 export type PostQueryVariables = Exact<{
   id: Scalars['Int'];
 }>;
@@ -1170,6 +1192,28 @@ export const ModulesDocument = gql`
 
 export function useModulesQuery(options: Omit<Urql.UseQueryArgs<ModulesQueryVariables>, 'query'> = {}) {
   return Urql.useQuery<ModulesQuery>({ query: ModulesDocument, ...options });
+};
+export const MyGroupsDocument = gql`
+    query MyGroups($moduleId: Int!) {
+  myGroups(moduleId: $moduleId) {
+    id
+    name
+    description
+    requirements
+    slug
+    isMember
+    isLeader
+    module {
+      id
+      name
+      code
+    }
+  }
+}
+    `;
+
+export function useMyGroupsQuery(options: Omit<Urql.UseQueryArgs<MyGroupsQueryVariables>, 'query'> = {}) {
+  return Urql.useQuery<MyGroupsQuery>({ query: MyGroupsDocument, ...options });
 };
 export const PostDocument = gql`
     query Post($id: Int!) {
