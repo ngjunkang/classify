@@ -697,7 +697,6 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
   };
 
   const handleSendScheduleDates = async () => {
-    console.log(startDate);
     setSendScheduleDoneFlag(false);
     const difference = getScheduleDifference(originalDates, scheduleDates);
     if (!difference.add.length && !difference.remove.length) {
