@@ -43,5 +43,5 @@ export class GroupSchedule extends BaseEntity {
   // true: available, false: not available, null: NIL
   @Field(() => Boolean, { nullable: true })
   @Column({ type: "bool", nullable: true, default: true })
-  availability!: boolean;
+  availability!: boolean | null;
 }
