@@ -171,7 +171,7 @@ const CreateUrqlClient = (ssrExchange: any, ctx: any) => {
         },
         optimistic: {
           writeMessage: (variables, cache, info) => {
-            const now: string = Date.parse(new Date().toString()).toString();
+            const now: string = new Date().getTime().toString();
             const me = cache.readQuery<MeQuery, MeQueryVariables>({
               query: MeDocument,
             });
