@@ -4,20 +4,28 @@ import {
   Ctx,
   Field,
   InputType,
+  Int,
   Mutation,
   ObjectType,
   Query,
   Resolver,
+  UseMiddleware,
 } from "type-graphql";
 import argon2 from "argon2";
 import { ThisContext } from "../types";
 import { validateRegister, validateLogin } from "../utils/validations";
-import { COOKIE_NAME, RESET_PASSWORD_PREFIX } from "../constant";
+import {
+  COOKIE_NAME,
+  RESET_PASSWORD_PREFIX,
+  VERIFY_EMAIL_PREFIX,
+} from "../constant";
 import sendEmail from "../utils/sendEmail";
 import { v4 } from "uuid";
 import "dotenv-safe/config";
 import resetPasswordEmail from "../utils/resetPasswordEmail";
 import { getConnection } from "typeorm";
+import isAuth from "../middlewares/isAuth";
+import verificationEmail from "../utils/verificationEmail";
 
 @ObjectType()
 class UserResponse {
@@ -72,6 +80,64 @@ class ResetPasswordInput {
 
 @Resolver()
 export class UserResolver {
+  @Mutation(() => UserResponse)
+  @UseMiddleware(isAuth)
+  async editUser(
+    @Arg("userId", () => Int) userId: number,
+    @Arg("email") email: string,
+    @Arg("description") description: string,
+    @Arg("displayName") displayName: string,
+    @Ctx() { req }: ThisContext
+  ): Promise<UserResponse> {
+    if (req.session.userId !== userId) {
+      throw new Error("not authorized");
+    }
+    if (!email.includes("@")) {
+      return {
+        errors: [
+          {
+            field: "email",
+            message: "Invalid email",
+          },
+        ],
+      };
+    }
+    const user = await getConnection()
+      .createQueryBuilder()
+      .update(User)
+      .set({ email, description, displayName })
+      .where("id = :userId", {
+        userId,
+      })
+      .returning("*")
+      .execute();
+    return {
+      user: user.raw[0],
+    };
+  }
+
+  @Mutation(() => Boolean)
+  @UseMiddleware(isAuth)
+  async toggleEdit(
+    @Arg("userId", () => Int) userId: number,
+    @Ctx() { req }: ThisContext
+  ) {
+    if (req.session.userId !== userId) {
+      throw new Error("not authorized");
+    }
+    const user = await User.findOne(userId);
+    await getConnection()
+      .createQueryBuilder()
+      .update(User)
+      .set({ editMode: !user?.editMode })
+      .where("id = :userId ", {
+        userId,
+      })
+      .returning("*")
+      .execute();
+    return true;
+  }
+
   @Mutation(() => UserResponse)
   async resetPassword(
     @Arg("data") data: ResetPasswordInput,
@@ -143,8 +209,7 @@ export class UserResolver {
     @Arg("email") email: string,
     @Ctx() { redis }: ThisContext
   ): Promise<Boolean> {
-    const regex =
-      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    const regex = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     if (!email || email.trim().length > 320 || !regex.test(email)) {
       return true;
     }
@@ -163,11 +228,74 @@ export class UserResolver {
       sendEmail({
         to: email,
         subject: "Reset Password",
+
         body: resetPasswordEmail({ username: user.displayName, token: token }),
       });
     }
 
     return true;
+  }
+
+  @Mutation(() => UserResponse)
+  async verifyEmail(
+    @Arg("token") token: String,
+    @Ctx() { redis, req }: ThisContext
+  ): Promise<UserResponse> {
+    // token validation
+    const key = VERIFY_EMAIL_PREFIX + token;
+    const userId = await redis.get(key);
+
+    if (!userId) {
+      return {
+        errors: [
+          {
+            field: "token",
+            message: "Token expired",
+          },
+        ],
+      };
+    }
+
+    const userIdInt = parseInt(userId);
+    const user = await User.findOne(userIdInt);
+
+    if (!user) {
+      return {
+        errors: [
+          {
+            field: "token",
+            message: "Invalid token",
+          },
+        ],
+      };
+    }
+    await User.update({ id: userIdInt }, { isVerified: true });
+    await redis.del(key);
+
+    req.session.userId = user.id;
+
+    return {
+      user: user,
+    };
+  }
+
+  @Mutation(() => Boolean)
+  async verificationEmail(
+    @Arg("userId", () => Int) userId: number,
+    @Ctx() { redis }: ThisContext
+  ) {
+    const user = await User.findOne(userId);
+    if (user) {
+      const token = v4();
+      redis.set(VERIFY_EMAIL_PREFIX + token, user.id, "ex", 7200000); // two hour to reset
+
+      sendEmail({
+        to: user.email,
+        subject: "Verify Email",
+
+        body: verificationEmail({ username: user.displayName, token: token }),
+      });
+    }
   }
 
   @Query(() => User, { nullable: true })
@@ -177,6 +305,11 @@ export class UserResolver {
     }
 
     return User.findOne(req.session.userId);
+  }
+
+  @Query(() => User, { nullable: true })
+  async user(@Arg("userId", () => Int) userId: number) {
+    return User.findOne(userId);
   }
 
   @Mutation(() => UserResponse)

@@ -27,6 +27,14 @@ export class User extends BaseEntity {
   @PrimaryGeneratedColumn()
   id!: number;
 
+  @Field()
+  @Column({ type: "boolean", default: false })
+  editMode: boolean;
+
+  @Field()
+  @Column({ type: "boolean", default: false })
+  isVerified: boolean;
+
   @OneToMany(() => Post, (post) => post.creator)
   posts: Post[];
 
@@ -61,6 +69,10 @@ export class User extends BaseEntity {
   @Field(() => String)
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Field(() => String, { nullable: true })
+  @Column({ default: null })
+  description: string;
 
   @Field()
   @Column({ unique: true })
