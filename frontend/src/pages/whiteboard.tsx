@@ -7,14 +7,17 @@ import {
   Link,
   Paper,
   Theme,
+  Typography,
 } from "@material-ui/core";
-import { createStyles, makeStyles } from "@material-ui/core/styles";
+import { createStyles, fade, makeStyles } from "@material-ui/core/styles";
 import { Delete, Edit } from "@material-ui/icons";
 import { withUrqlClient } from "next-urql";
 import NextLink from "next/link";
 import { useRouter } from "next/router";
 import React, { useState } from "react";
 import Layout from "../components/Layout";
+import DataLoadingError from "../components/misc/DataLoadingError";
+import ModuleSelection from "../components/ModuleSelection";
 import { UpvoteSection } from "../components/UpvoteSection";
 import {
   useDeletePostMutation,
@@ -23,8 +26,6 @@ import {
 } from "../generated/graphql";
 import CreateUrqlClient from "../utils/CreateUrqlClient";
 import isServer from "../utils/isServer";
-import { Typography } from "@material-ui/core";
-import ModuleSelection from "../components/ModuleSelection";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -63,6 +64,14 @@ const useStyles = makeStyles((theme: Theme) =>
     chip: {
       marginTop: 16,
       marginLeft: 10,
+    },
+    center: {
+      display: "flex",
+      height: 300,
+      padding: theme.spacing(2),
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: fade(theme.palette.background.default, 0.15),
     },
   })
 );
@@ -124,9 +133,10 @@ const Forum = () => {
       ) : (
         <Grid container spacing={2} direction="column">
           {data!.posts.posts.length <= 0 ? (
-            <div>
-              <text>no posts yet, create one!</text>
-            </div>
+            <DataLoadingError
+              text="No posts yet, create the first post!"
+              className={styles.center}
+            />
           ) : (
             data!.posts.posts.map((p) =>
               !p ? null : (
