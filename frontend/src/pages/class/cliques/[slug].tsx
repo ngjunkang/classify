@@ -6,14 +6,15 @@ import {
   Divider,
   Fab,
   Grid,
+  IconButton,
+  Link,
   List,
   ListItem,
   ListItemAvatar,
   ListItemText,
   Theme,
-  Typography,
-  IconButton,
   Tooltip,
+  Typography,
 } from "@material-ui/core";
 import { createStyles, fade, makeStyles } from "@material-ui/core/styles";
 import { AccessTime, Add, Done, Publish, Send, Undo } from "@material-ui/icons";
@@ -21,6 +22,7 @@ import { Alert } from "@material-ui/lab";
 import { startOfWeek } from "date-fns";
 import { Form, Formik } from "formik";
 import { withUrqlClient } from "next-urql";
+import NextLink from "next/link";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import ScheduleSelector from "react-schedule-selector";
@@ -133,8 +135,9 @@ const useStyles = makeStyles((theme: Theme) =>
         backgroundColor: "rgba(80, 200, 120, 0.2)",
       },
     },
-    opaque: {
-      opacity: 1 || 1,
+    memberLink: {
+      cursor: "pointer",
+      color: "inherit",
     },
   })
 );
@@ -315,9 +318,14 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
                       </ListItemAvatar>
                       <ListItemText
                         primary={
-                          <Typography variant="h6">
-                            {member.displayName}
-                          </Typography>
+                          <NextLink
+                            href="/profile/[id]"
+                            as={`/profile/${member.id}`}
+                          >
+                            <Link variant="h6" className={classes.memberLink}>
+                              {member.displayName}
+                            </Link>
+                          </NextLink>
                         }
                       ></ListItemText>
                     </ListItem>
@@ -786,7 +794,7 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
             numDays={7}
             startDate={startDate}
             dateFormat="DD MMM"
-            timeFormat="HH:mma"
+            timeFormat="HH:mm"
             minTime={0}
             maxTime={24}
             hourlyChunks={2}
