@@ -27,6 +27,8 @@ import { Module } from "../entities/Module";
 import { User } from "../entities/User";
 import isAuth from "../middlewares/isAuth";
 import { ThisContext } from "../types";
+import inviteEmail from "../utils/inviteEmail";
+import sendEmail from "../utils/sendEmail";
 import { FieldError } from "./user";
 
 @InputType()
@@ -491,6 +493,23 @@ export class GroupResolver {
       group_id: groupId,
       reply_status: 0,
     }).save();
+
+    const user = await User.findOne(userId);
+    const group = await Group.findOne(groupId);
+
+    if (user && group) {
+      console.log("sent");
+      sendEmail({
+        to: user.email,
+        subject: `Classify Clique Invite from ${group.name}`,
+
+        body: inviteEmail({
+          username: user.displayName,
+          slug: group.slug,
+          groupName: group.name,
+        }),
+      });
+    }
 
     return { success: true, message: "User Invited" };
   }
