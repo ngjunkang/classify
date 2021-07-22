@@ -122,7 +122,13 @@ yarn gen-env
 
 Create a file called .env.local in the frontend directory and it should contain:
 
-    NEXT_PUBLIC_API_URL=http://localhost:4000/graphql
+1.  NEXT_PUBLIC_API_URL=backendAPIAddress
+
+        NEXT_PUBLIC_API_URL=http://localhost:4000/graphql
+
+2.  NEXT_PUBLIC_SUBSCRIPTION_WS=backendAPISubscriptionAddress
+
+        NEXT_PUBLIC_SUBSCRIPTION_WS=ws://localhost:4000/subscriptions
 
 \*Note: Any variables must be preceded by NEXT_PUBLIC\_
 
