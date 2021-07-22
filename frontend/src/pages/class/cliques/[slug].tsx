@@ -139,6 +139,9 @@ const useStyles = makeStyles((theme: Theme) =>
       cursor: "pointer",
       color: "inherit",
     },
+    requestLink: {
+      cursor: "pointer",
+    },
   })
 );
 
@@ -410,7 +413,12 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
                     </>
                   }
                 >
-                  {`${request.displayName} has requested to join!`}
+                  <NextLink href="/profile/[id]" as={`/profile/${request.id}`}>
+                    <Link className={classes.requestLink}>
+                      {request.displayName}
+                    </Link>
+                  </NextLink>
+                  {` has requested to join!`}
                 </Alert>
               </Grid>
             );
