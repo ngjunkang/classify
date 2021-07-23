@@ -753,6 +753,7 @@ export class GroupResolver {
       .where("schedule.timestamp >= :startDate", { startDate })
       .andWhere("schedule.timestamp < :endDate", { endDate })
       .andWhere("schedule.availability = TRUE")
+      .andWhere("schedule.group_id = :groupId", { groupId })
       .getMany();
   }
 }
