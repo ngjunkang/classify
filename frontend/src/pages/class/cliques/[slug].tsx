@@ -720,7 +720,7 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
         message: "No changes were made!",
       });
       setOpen(true);
-      setSendScheduleDoneFlag(false);
+      setSendScheduleDoneFlag(true);
       return;
     }
 
