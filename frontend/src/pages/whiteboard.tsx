@@ -205,4 +205,4 @@ const Forum = () => {
   );
 };
 
-export default withUrqlClient(CreateUrqlClient, { ssr: true })(Forum);
+export default withUrqlClient(CreateUrqlClient, { ssr: false })(Forum);

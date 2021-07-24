@@ -11,7 +11,13 @@ import {
 } from "@material-ui/core";
 import { lightBlue } from "@material-ui/core/colors";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
-import { Delete, Edit, ExpandMore, TramRounded } from "@material-ui/icons";
+import {
+  Delete,
+  Edit,
+  ExpandMore,
+  TrainOutlined,
+  TramRounded,
+} from "@material-ui/icons";
 import clsx from "clsx";
 import { Form, Formik } from "formik";
 import { withUrqlClient } from "next-urql";
@@ -122,7 +128,6 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 const Post = ({}) => {
-  const [display, changeDisplay] = useState(false);
   const router = useRouter();
   const styles = useStyles();
   const [{ data, fetching }] = postFromUrl();
@@ -130,6 +135,13 @@ const Post = ({}) => {
   const [, createComment] = useCreateCommentMutation();
   const [, updateComment] = useUpdateCommentMutation();
   const [, deleteComment] = useDeleteCommentMutation();
+
+  useEffect(() => {
+    if (data?.post === null) {
+      router.push("/whiteboard");
+    }
+  }, [fetching]);
+  const [display, changeDisplay] = useState(false);
   const postDate = data?.post?.updatedAt;
   const author = (
     <NextLink href="/profile/[id]" as={`/profile/${data?.post?.creator?.id}`}>
@@ -154,20 +166,13 @@ const Post = ({}) => {
       minute: "numeric",
     });
   };
+  if (!data?.post) {
+    return <div>redirecting...</div>;
+  }
   if (fetching) {
     return (
       <Layout>
         <div> loading... </div>
-      </Layout>
-    );
-  }
-  if (!data?.post) {
-    useEffect(() => {
-      router.push("/whiteboard");
-    });
-    return (
-      <Layout>
-        <Box>redirecting...</Box>
       </Layout>
     );
   }
@@ -382,4 +387,4 @@ const Post = ({}) => {
   );
 };
 
-export default withUrqlClient(CreateUrqlClient, { ssr: true })(Post);
+export default withUrqlClient(CreateUrqlClient, { ssr: false })(Post);
