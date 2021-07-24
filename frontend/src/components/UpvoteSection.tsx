@@ -41,14 +41,20 @@ export const UpvoteSection: React.FC<UpvoteSectionProps> = ({
 }) => {
   const styles = useStyles();
   const [, vote] = useVoteMutation();
+  const [loadingState, setLoadingState] = useState<
+    "upvote-loading" | "downvote-loading" | "not-loading"
+  >("not-loading");
   return (
     <Box className={styles.flexBoxCol}>
       <IconButton
+        disabled={loadingState === "upvote-loading"}
         onClick={async () => {
+          setLoadingState("upvote-loading");
           await vote({
             postId: post.id,
             value: 1,
           });
+          setLoadingState("not-loading");
         }}
         color={loggedIn && post.voteStatus === 1 ? "primary" : "default"}
       >
@@ -56,11 +62,14 @@ export const UpvoteSection: React.FC<UpvoteSectionProps> = ({
       </IconButton>
       <Typography>{post.points}</Typography>
       <IconButton
+        disabled={loadingState === "downvote-loading"}
         onClick={async () => {
+          setLoadingState("downvote-loading");
           await vote({
             postId: post.id,
             value: -1,
           });
+          setLoadingState("not-loading");
         }}
         color={loggedIn && post.voteStatus === -1 ? "primary" : "default"}
       >

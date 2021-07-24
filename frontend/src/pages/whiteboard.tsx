@@ -100,10 +100,9 @@ const Forum = () => {
       year: "numeric",
       month: "short",
       day: "2-digit",
-      hour12: false,
+      hour12: true,
       hour: "numeric",
       minute: "numeric",
-      second: "numeric",
     });
   };
 

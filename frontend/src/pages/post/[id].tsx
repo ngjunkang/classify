@@ -11,12 +11,12 @@ import {
 } from "@material-ui/core";
 import { lightBlue } from "@material-ui/core/colors";
 import { createStyles, makeStyles } from "@material-ui/core/styles";
-import { Delete, Edit, ExpandMore } from "@material-ui/icons";
+import { Delete, Edit, ExpandMore, TramRounded } from "@material-ui/icons";
 import clsx from "clsx";
 import { Form, Formik } from "formik";
 import { withUrqlClient } from "next-urql";
 import { useRouter } from "next/router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { CommentUpvote } from "../../components/CommentUpvote";
 import NextLink from "next/link";
 import Layout from "../../components/Layout";
@@ -149,10 +149,9 @@ const Post = ({}) => {
       year: "numeric",
       month: "short",
       day: "2-digit",
-      hour12: false,
+      hour12: true,
       hour: "numeric",
       minute: "numeric",
-      second: "numeric",
     });
   };
   if (fetching) {
@@ -163,9 +162,12 @@ const Post = ({}) => {
     );
   }
   if (!data?.post) {
+    useEffect(() => {
+      router.push("/whiteboard");
+    });
     return (
       <Layout>
-        <Box>could not find post</Box>
+        <Box>redirecting...</Box>
       </Layout>
     );
   }

@@ -5,7 +5,7 @@ import { withUrqlClient } from "next-urql";
 import { useRouter } from "next/router";
 import React from "react";
 import Layout from "../components/Layout";
-import { useMeQuery } from "../generated/graphql";
+import { useMeQuery, useUserQuery } from "../generated/graphql";
 import CreateUrqlClient from "../utils/CreateUrqlClient";
 import isServer from "../utils/isServer";
 
@@ -45,13 +45,23 @@ const Index = () => {
   const [{ data: me }] = useMeQuery({
     pause: isServer(),
   });
+  let intId = -1;
+  if (me?.me) {
+    intId = me.me.id;
+  }
+  const [{ data: user, fetching }] = useUserQuery({
+    pause: intId === -1,
+    variables: { userId: intId },
+  });
 
   return (
     <Layout variant="regular">
       {me?.me ? (
-        <Typography>{`Hello${
-          me?.me ? ", " + me.me.username : ""
-        }!`}</Typography>
+        <Typography>{`Hello${me?.me ? ", " + me.me.username : ""}!${
+          user?.user?.isVerified
+            ? ""
+            : " Your email is not verified, please do so in the profile page"
+        }`}</Typography>
       ) : null}
       <br />
       <Box className={styles.flexBoxCol}>

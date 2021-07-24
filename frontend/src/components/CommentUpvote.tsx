@@ -44,15 +44,21 @@ export const CommentUpvote: React.FC<CommentUpvoteProps> = ({
 }) => {
   const styles = useStyles();
   const [, vote] = useVoteCommentMutation();
+  const [loadingState, setLoadingState] = useState<
+    "upvote-loading" | "downvote-loading" | "not-loading"
+  >("not-loading");
   return (
     <Box className={styles.flexBoxRow}>
       <IconButton
+        disabled={loadingState === "upvote-loading"}
         onClick={async () => {
+          setLoadingState("upvote-loading");
           await vote({
             postId: comment.postId,
             value: 1,
             commentId: comment.commentId,
           });
+          setLoadingState("not-loading");
         }}
         color={loggedIn && comment.voteStatus === 1 ? "primary" : "default"}
       >
@@ -62,12 +68,15 @@ export const CommentUpvote: React.FC<CommentUpvoteProps> = ({
         <Typography>{comment.points}</Typography>
       </Box>
       <IconButton
+        disabled={loadingState === "downvote-loading"}
         onClick={async () => {
+          setLoadingState("downvote-loading");
           await vote({
             postId: comment.postId,
             value: -1,
             commentId: comment.commentId,
           });
+          setLoadingState("not-loading");
         }}
         color={loggedIn && comment.voteStatus === -1 ? "primary" : "default"}
       >

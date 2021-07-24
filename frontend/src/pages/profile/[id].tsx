@@ -11,7 +11,7 @@ import { Edit } from "@material-ui/icons";
 import { Form, Formik } from "formik";
 import { withUrqlClient } from "next-urql";
 import { useRouter } from "next/router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Layout from "../../components/Layout";
 import LoadingButton from "../../components/LoadingButton";
 import StandardTextField from "../../components/StandardTextField";
@@ -29,6 +29,7 @@ import CreateUrqlClient from "../../utils/CreateUrqlClient";
 import isServer from "../../utils/isServer";
 import useGlobalStyles from "../../styles/GlobalStyles";
 import { mapError } from "../../utils/mapError";
+import { blue } from "@material-ui/core/colors";
 
 interface ProfileProps {}
 
@@ -85,6 +86,12 @@ const useStyles = makeStyles((theme: Theme) =>
     checkIcon: {
       marginLeft: 5,
     },
+    red: {
+      color: "red",
+    },
+    blue: {
+      color: blue[500],
+    },
   })
 );
 
@@ -117,6 +124,11 @@ const Profile: React.FC<ProfileProps> = ({}) => {
         <div>Loading...</div>
       ) : (
         <Box>
+          {!data.user.isVerified ? (
+            <Typography className={styles.red}>
+              Email is not verified!
+            </Typography>
+          ) : null}
           <Paper className={styles.flexBox} elevation={2}>
             {data.user.editMode ? (
               <Box className={styles.flexGrowContent}>
@@ -217,8 +229,12 @@ const Profile: React.FC<ProfileProps> = ({}) => {
               <Box className={styles.edit}>
                 {data.user.isVerified ? null : (
                   <Button
+                    className={styles.blue}
                     onClick={async () => {
                       await verificationEmail({ userId: data.user.id });
+                      alert(
+                        "Email sent. Please check your email (and also Junk) for the link to verify email. Thank you!"
+                      );
                     }}
                   >
                     Verify Email
