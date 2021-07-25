@@ -17,7 +17,15 @@ import {
   Typography,
 } from "@material-ui/core";
 import { createStyles, fade, makeStyles } from "@material-ui/core/styles";
-import { AccessTime, Add, Done, Publish, Send, Undo } from "@material-ui/icons";
+import {
+  AccessTime,
+  Add,
+  Done,
+  Publish,
+  Refresh,
+  Send,
+  Undo,
+} from "@material-ui/icons";
 import { Alert } from "@material-ui/lab";
 import { startOfWeek } from "date-fns";
 import { Form, Formik } from "formik";
@@ -173,15 +181,18 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
   const [GROUP_ID, setGROUP_ID] = useState(0);
   const [startDate, setStartDate] = useState(startOfWeek(new Date()));
 
-  const [{ data: queryScheduleDates, fetching: queryScheduleDatesFetching }] =
-    useGetScheduleDatesQuery({
-      variables: { input: { groupId: GROUP_ID, startDate } },
-      pause: GROUP_ID === 0,
-    });
+  const [
+    { data: queryScheduleDates, fetching: queryScheduleDatesFetching },
+    refreshScheduleDates,
+  ] = useGetScheduleDatesQuery({
+    variables: { input: { groupId: GROUP_ID, startDate } },
+    pause: GROUP_ID === 0,
+  });
   const [scheduleDates, setScheduleDates] = useState<Date[]>([]);
   const [originalDates, setOriginalDates] = useState<Date[]>([]);
   const [otherDates, setOtherDates] = useState<Record<number, number>>({});
 
+  const [scheduleRefreshing, setScheduleRefreshing] = useState(false);
   const [sendScheduleDoneFlag, setSendScheduleDoneFlag] = useState(true);
   const [, replyInvite] = useReplyInviteMutation();
   const [, replyRequest] = useReplyRequestMutation();
@@ -776,6 +787,24 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
     );
   };
 
+  const handleRefresh = () => {
+    refreshScheduleDates({ requestPolicy: "network-only" });
+    setScheduleRefreshing(false);
+    setOpenDialog(false);
+  };
+
+  const handleScheduleRefresh = async () => {
+    setScheduleRefreshing(true);
+
+    const difference = getScheduleDifference(originalDates, scheduleDates);
+    if (difference.add.length || difference.remove.length) {
+      // edited
+      setOpenDialog(true);
+    } else {
+      handleRefresh();
+    }
+  };
+
   let displaySchedule = null;
   if (isMember) {
     displaySchedule = (
@@ -783,6 +812,28 @@ const CliquePage: React.FC<CliquePageProps> = ({}) => {
         <Box display="flex">
           <WeekPicker handleOnChange={handlePickerChange} />
           <Box flexGrow={1} />
+          <Box marginX={1}>
+            <Tooltip title="refresh all dates">
+              <IconButton
+                onClick={handleScheduleRefresh}
+                disabled={scheduleRefreshing || queryScheduleDatesFetching}
+              >
+                <Refresh />
+              </IconButton>
+            </Tooltip>
+            <ConfirmationDialog
+              handleProceed={handleRefresh}
+              handleClose={() => {
+                setOpenDialog(false);
+                setScheduleRefreshing(false);
+              }}
+              open={openDialog}
+              dialogTitle="Refresh all dates?"
+              diaglogContent="Are you sure you wanna refresh the dates? Your current edits will be gone!"
+              dialogCancelBtnTitle="Cancel"
+              dialogProceedBtnTitle="Refresh"
+            />
+          </Box>
           <Button
             variant="contained"
             color="primary"
