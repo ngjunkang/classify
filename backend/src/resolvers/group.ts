@@ -549,8 +549,7 @@ export class GroupResolver {
     if (!input.name) {
       nameErrorMessage = "Group name required";
     } else if (!/^[A-Za-z0-9\s]+$/.test(input.name.trim())) {
-      nameErrorMessage =
-        "Only lowercase alphanumeric characters and spaces are allowed";
+      nameErrorMessage = "Only alphanumeric characters and spaces are allowed";
     } else if (
       !(input.name.trim().length > 5 && input.name.trim().length < 41)
     ) {
